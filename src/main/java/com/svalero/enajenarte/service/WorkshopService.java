@@ -1,5 +1,6 @@
 package com.svalero.enajenarte.service;
 
+import com.svalero.enajenarte.domain.Registration;
 import com.svalero.enajenarte.domain.Speaker;
 import com.svalero.enajenarte.domain.Workshop;
 import com.svalero.enajenarte.dto.WorkshopInDto;
@@ -8,6 +9,8 @@ import com.svalero.enajenarte.dto.WorkshopOutDtoV2;
 import com.svalero.enajenarte.exception.DuplicateWorkshopException;
 import com.svalero.enajenarte.exception.SpeakerNotFoundException;
 import com.svalero.enajenarte.exception.WorkshopNotFoundException;
+import com.svalero.enajenarte.repository.HasAssociatedRegistrationsException;
+import com.svalero.enajenarte.repository.RegistrationRepository;
 import com.svalero.enajenarte.repository.SpeakerRepository;
 import com.svalero.enajenarte.repository.WorkshopRepository;
 import org.modelmapper.ModelMapper;
@@ -24,6 +27,8 @@ public class WorkshopService {
     private WorkshopRepository workshopRepository;
     @Autowired
     private SpeakerRepository speakerRepository;
+    @Autowired
+    private RegistrationRepository registrationRepository;
     @Autowired
     private ModelMapper modelMapper;
 
@@ -84,6 +89,20 @@ public class WorkshopService {
     public void delete(long id) throws WorkshopNotFoundException {
         Workshop workshop = workshopRepository.findById(id)
                 .orElseThrow(WorkshopNotFoundException::new);
+
+        workshopRepository.delete(workshop);
+    }
+
+    // DELETE V2
+    // Versión 2: no permite eliminar workshops con inscripciones asociadas
+    public void deleteV2(long id) throws WorkshopNotFoundException, HasAssociatedRegistrationsException {
+        Workshop workshop = workshopRepository.findById(id)
+                .orElseThrow(WorkshopNotFoundException::new);
+
+        List<Registration> registrations = registrationRepository.findByWorkshop(workshop);
+        if (!registrations.isEmpty()) {
+            throw new HasAssociatedRegistrationsException();
+        }
 
         workshopRepository.delete(workshop);
     }

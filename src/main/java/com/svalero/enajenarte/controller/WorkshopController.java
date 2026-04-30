@@ -5,6 +5,7 @@ import com.svalero.enajenarte.dto.WorkshopOutDto;
 import com.svalero.enajenarte.dto.WorkshopOutDtoV2;
 import com.svalero.enajenarte.exception.DuplicateWorkshopException;
 import com.svalero.enajenarte.exception.ErrorResponse;
+import com.svalero.enajenarte.repository.HasAssociatedRegistrationsException;
 import com.svalero.enajenarte.service.WorkshopService;
 import com.svalero.enajenarte.exception.SpeakerNotFoundException;
 import com.svalero.enajenarte.exception.WorkshopNotFoundException;
@@ -139,6 +140,21 @@ public class WorkshopController {
         return ResponseEntity.noContent().build();
     }
 
+    // DELETE V1
+    @DeleteMapping("/api/v1/workshops/{id}")
+    public ResponseEntity<Void> deleteWorkshopV1(@PathVariable long id) throws WorkshopNotFoundException {
+        workshopService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // DELETE V2
+    @DeleteMapping("/api/v2/workshops/{id}")
+    public ResponseEntity<Void> deleteWorkshopV2(@PathVariable long id)
+            throws WorkshopNotFoundException, HasAssociatedRegistrationsException {
+        workshopService.deleteV2(id);
+        return ResponseEntity.noContent().build();
+    }
+
     //404 - Workshop
     @ExceptionHandler(WorkshopNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleException(WorkshopNotFoundException wnfe) {
@@ -157,6 +173,13 @@ public class WorkshopController {
     @ExceptionHandler(DuplicateWorkshopException.class)
     public ResponseEntity<ErrorResponse> handleException(DuplicateWorkshopException dwe) {
         ErrorResponse errorResponse = ErrorResponse.generalError(409, "conflict", "The workshop already exists");
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    // 409 - Workshop con inscripciones asociadas
+    @ExceptionHandler(HasAssociatedRegistrationsException.class)
+    public ResponseEntity<ErrorResponse> handleException(HasAssociatedRegistrationsException hare) {
+        ErrorResponse errorResponse = ErrorResponse.generalError(409, "conflict", "The workshop has associated registrations");
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
