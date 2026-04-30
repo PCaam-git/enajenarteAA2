@@ -187,4 +187,46 @@ public class WorkshopService {
 
         return updatedWorkshopOutDto;
     }
+
+    // PUT V2
+    // Versión 2: antes de modificar el workshop comprueba que no se convierta en duplicado de otro
+    public WorkshopOutDto modifyV2(long id, WorkshopInDto workshopInDto)
+            throws WorkshopNotFoundException, SpeakerNotFoundException, DuplicateWorkshopException {
+
+        Workshop existingWorkshop = workshopRepository.findById(id)
+                .orElseThrow(WorkshopNotFoundException::new);
+
+        Speaker speaker = speakerRepository.findById(workshopInDto.getSpeakerId())
+                .orElseThrow(SpeakerNotFoundException::new);
+
+        boolean duplicatedWorkshopExists = workshopRepository.findAll().stream()
+                .anyMatch(workshop ->
+                        // esto evita que el workshop se compare consigo mismo
+                        workshop.getId() != id
+                                && workshop.getName() != null
+                                && workshop.getName().equalsIgnoreCase(workshopInDto.getName())
+                                && workshop.getStartDate() != null
+                                && workshop.getStartDate().equals(workshopInDto.getStartDate())
+                                && workshop.getSpeaker() != null
+                                && workshop.getSpeaker().getId() == speaker.getId()
+                );
+
+        if (duplicatedWorkshopExists) {
+            throw new DuplicateWorkshopException();
+        }
+
+        modelMapper.map(workshopInDto, existingWorkshop);
+        existingWorkshop.setId(id);
+        existingWorkshop.setSpeaker(speaker);
+
+        Workshop updatedWorkshop = workshopRepository.save(existingWorkshop);
+        WorkshopOutDto updatedWorkshopOutDto = modelMapper.map(updatedWorkshop, WorkshopOutDto.class);
+
+        // Modificación aplicada: Mapear -> Setear IDs -> Devolver. Evita que speakerId salga a 0
+        if (updatedWorkshop.getSpeaker() != null) {
+            updatedWorkshopOutDto.setSpeakerId(updatedWorkshop.getSpeaker().getId());
+        }
+
+        return updatedWorkshopOutDto;
+    }
 }
