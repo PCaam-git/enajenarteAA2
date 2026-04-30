@@ -2,6 +2,7 @@ package com.svalero.enajenarte.controller;
 
 import com.svalero.enajenarte.dto.WorkshopInDto;
 import com.svalero.enajenarte.dto.WorkshopOutDto;
+import com.svalero.enajenarte.dto.WorkshopOutDtoV2;
 import com.svalero.enajenarte.exception.ErrorResponse;
 import com.svalero.enajenarte.service.WorkshopService;
 import com.svalero.enajenarte.exception.SpeakerNotFoundException;
@@ -36,6 +37,42 @@ public class WorkshopController {
         if( workshopOutDto.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
+        // Si hay resultados, devuelve 200 Ok con la lista
+        return ResponseEntity.ok(workshopOutDto);
+    }
+
+    // GET V1
+    @GetMapping("/api/v1/workshops")
+    public ResponseEntity<List<WorkshopOutDto>> getAllV1(
+            @RequestParam(value = "name", defaultValue = "") String name,
+            @RequestParam(value = "isOnline", defaultValue = "") String isOnline,
+            @RequestParam(value = "speakerId", defaultValue = "") String speakerId) {
+
+        List<WorkshopOutDto> workshopOutDto = workshopService.findAll(name, isOnline, speakerId);
+
+        // Si la lista está vacía, devuelve 204 No Content
+        if (workshopOutDto.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        // Si hay resultados, devuelve 200 Ok con la lista
+        return ResponseEntity.ok(workshopOutDto);
+    }
+
+    // GET V2
+    @GetMapping("/api/v2/workshops")
+    public ResponseEntity<List<WorkshopOutDtoV2>> getAllV2(
+            @RequestParam(value = "name", defaultValue = "") String name,
+            @RequestParam(value = "isOnline", defaultValue = "") String isOnline,
+            @RequestParam(value = "speakerId", defaultValue = "") String speakerId) {
+
+        List<WorkshopOutDtoV2> workshopOutDto = workshopService.findAllV2(name, isOnline, speakerId);
+
+        // Si la lista está vacía, devuelve 204 No Content
+        if (workshopOutDto.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
         // Si hay resultados, devuelve 200 Ok con la lista
         return ResponseEntity.ok(workshopOutDto);
     }
