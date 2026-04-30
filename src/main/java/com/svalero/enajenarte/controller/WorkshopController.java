@@ -111,8 +111,24 @@ public class WorkshopController {
     // PUT
     @PutMapping("/workshops/{id}")
     public ResponseEntity<WorkshopOutDto> modifyWorkshop(@PathVariable long id, @Valid @RequestBody WorkshopInDto workshopInDto)
-        throws SpeakerNotFoundException, WorkshopNotFoundException {
+            throws SpeakerNotFoundException, WorkshopNotFoundException {
         WorkshopOutDto updateWorkshop = workshopService.modify(id, workshopInDto);
+        return ResponseEntity.ok(updateWorkshop);
+    }
+
+    // PUT V1
+    @PutMapping("/api/v1/workshops/{id}")
+    public ResponseEntity<WorkshopOutDto> modifyWorkshopV1(@PathVariable long id, @Valid @RequestBody WorkshopInDto workshopInDto)
+            throws SpeakerNotFoundException, WorkshopNotFoundException {
+        WorkshopOutDto updateWorkshop = workshopService.modify(id, workshopInDto);
+        return ResponseEntity.ok(updateWorkshop);
+    }
+
+    // PUT V2
+    @PutMapping("/api/v2/workshops/{id}")
+    public ResponseEntity<WorkshopOutDto> modifyWorkshopV2(@PathVariable long id, @Valid @RequestBody WorkshopInDto workshopInDto)
+            throws SpeakerNotFoundException, WorkshopNotFoundException, DuplicateWorkshopException {
+        WorkshopOutDto updateWorkshop = workshopService.modifyV2(id, workshopInDto);
         return ResponseEntity.ok(updateWorkshop);
     }
 
