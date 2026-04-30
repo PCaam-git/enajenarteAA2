@@ -3,6 +3,7 @@ package com.svalero.enajenarte.controller;
 import com.svalero.enajenarte.dto.WorkshopInDto;
 import com.svalero.enajenarte.dto.WorkshopOutDto;
 import com.svalero.enajenarte.dto.WorkshopOutDtoV2;
+import com.svalero.enajenarte.exception.DuplicateWorkshopException;
 import com.svalero.enajenarte.exception.ErrorResponse;
 import com.svalero.enajenarte.service.WorkshopService;
 import com.svalero.enajenarte.exception.SpeakerNotFoundException;
@@ -91,6 +92,22 @@ public class WorkshopController {
         return new ResponseEntity<>(newWorkshop, HttpStatus.CREATED);
     }
 
+    // POST V1
+    @PostMapping("/api/v1/workshops")
+    public ResponseEntity<WorkshopOutDto> addWorkshopV1(@Valid @RequestBody WorkshopInDto workshopInDto)
+            throws SpeakerNotFoundException {
+        WorkshopOutDto newWorkshop = workshopService.add(workshopInDto);
+        return new ResponseEntity<>(newWorkshop, HttpStatus.CREATED);
+    }
+
+    // POST V2
+    @PostMapping("/api/v2/workshops")
+    public ResponseEntity<WorkshopOutDto> addWorkshopV2(@Valid @RequestBody WorkshopInDto workshopInDto)
+            throws SpeakerNotFoundException, DuplicateWorkshopException {
+        WorkshopOutDto newWorkshop = workshopService.addV2(workshopInDto);
+        return new ResponseEntity<>(newWorkshop, HttpStatus.CREATED);
+    }
+
     // PUT
     @PutMapping("/workshops/{id}")
     public ResponseEntity<WorkshopOutDto> modifyWorkshop(@PathVariable long id, @Valid @RequestBody WorkshopInDto workshopInDto)
@@ -118,6 +135,13 @@ public class WorkshopController {
     public ResponseEntity<ErrorResponse> handleException(SpeakerNotFoundException snfe) {
         ErrorResponse errorResponse = ErrorResponse.notFound("The speaker does not exist");
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    // 409 - Workshop duplicado
+    @ExceptionHandler(DuplicateWorkshopException.class)
+    public ResponseEntity<ErrorResponse> handleException(DuplicateWorkshopException dwe) {
+        ErrorResponse errorResponse = ErrorResponse.generalError(409, "conflict", "The workshop already exists");
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
     // 400 - Validaciones

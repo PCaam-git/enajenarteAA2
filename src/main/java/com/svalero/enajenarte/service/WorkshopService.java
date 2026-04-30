@@ -5,6 +5,7 @@ import com.svalero.enajenarte.domain.Workshop;
 import com.svalero.enajenarte.dto.WorkshopInDto;
 import com.svalero.enajenarte.dto.WorkshopOutDto;
 import com.svalero.enajenarte.dto.WorkshopOutDtoV2;
+import com.svalero.enajenarte.exception.DuplicateWorkshopException;
 import com.svalero.enajenarte.exception.SpeakerNotFoundException;
 import com.svalero.enajenarte.exception.WorkshopNotFoundException;
 import com.svalero.enajenarte.repository.SpeakerRepository;
@@ -30,6 +31,40 @@ public class WorkshopService {
     public WorkshopOutDto add(WorkshopInDto workshopInDto) throws SpeakerNotFoundException {
         Speaker speaker = speakerRepository.findById(workshopInDto.getSpeakerId())
                 .orElseThrow(SpeakerNotFoundException::new);
+
+        Workshop workshop = modelMapper.map(workshopInDto, Workshop.class);
+        workshop.setSpeaker(speaker);
+
+        Workshop newWorkshop = workshopRepository.save(workshop);
+
+        // Modificación aplicada: Mapear -> Setear IDs -> Devolver. Evita que speakerId salga a 0
+        WorkshopOutDto workshopOutDto = modelMapper.map(newWorkshop, WorkshopOutDto.class);
+        if (newWorkshop.getSpeaker() != null) {
+            workshopOutDto.setSpeakerId(newWorkshop.getSpeaker().getId());
+        }
+
+        return workshopOutDto;
+    }
+
+    // POST V2
+    // Versión 2: antes de crear el workshop comprueba si ya existe uno con los mismos datos
+    public WorkshopOutDto addV2(WorkshopInDto workshopInDto) throws SpeakerNotFoundException, DuplicateWorkshopException {
+        Speaker speaker = speakerRepository.findById(workshopInDto.getSpeakerId())
+                .orElseThrow(SpeakerNotFoundException::new);
+
+        boolean duplicatedWorkshopExists = workshopRepository.findAll().stream()
+                .anyMatch(existingWorkshop ->
+                        existingWorkshop.getName() != null
+                                && existingWorkshop.getName().equalsIgnoreCase(workshopInDto.getName())
+                                && existingWorkshop.getStartDate() != null
+                                && existingWorkshop.getStartDate().equals(workshopInDto.getStartDate())
+                                && existingWorkshop.getSpeaker() != null
+                                && existingWorkshop.getSpeaker().getId() == speaker.getId()
+                );
+
+        if (duplicatedWorkshopExists) {
+            throw new DuplicateWorkshopException();
+        }
 
         Workshop workshop = modelMapper.map(workshopInDto, Workshop.class);
         workshop.setSpeaker(speaker);
