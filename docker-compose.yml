@@ -1,4 +1,5 @@
 name: enajenarte
+
 services:
   db:
     image: mariadb:11.3.2
@@ -12,6 +13,20 @@ services:
       - "3307:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
+    restart: always
+
+  api:
+    build: .
+    container_name: enajenarte-api
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+    ports:
+      - "8085:8085"
+    depends_on:
+      - db
     restart: always
 
 volumes:
