@@ -1,4 +1,4 @@
-package com.svalero.enajenarte.repository;
+package com.svalero.enajenarte.exception;
 
 public class HasAssociatedRegistrationsException extends Exception {
 
