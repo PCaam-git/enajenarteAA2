@@ -5,7 +5,7 @@ import com.svalero.enajenarte.dto.WorkshopOutDto;
 import com.svalero.enajenarte.dto.WorkshopOutDtoV2;
 import com.svalero.enajenarte.exception.DuplicateWorkshopException;
 import com.svalero.enajenarte.exception.ErrorResponse;
-import com.svalero.enajenarte.repository.HasAssociatedRegistrationsException;
+import com.svalero.enajenarte.exception.HasAssociatedRegistrationsException;
 import com.svalero.enajenarte.service.WorkshopService;
 import com.svalero.enajenarte.exception.SpeakerNotFoundException;
 import com.svalero.enajenarte.exception.WorkshopNotFoundException;
