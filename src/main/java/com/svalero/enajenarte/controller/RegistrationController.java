@@ -33,7 +33,7 @@ public class RegistrationController {
             @RequestParam(value = "isPaid", defaultValue = "") String isPaid)
     {
 
-        List<RegistrationOutDto> registrationsOutDto = registrationService.findAll(userId, workshopId, isPaid);
+        List<RegistrationOutDto> registrationsOutDto = registrationService.findAll(workshopId, userId, isPaid);
 
         // Si la lista está vacía, devuelve 204 No content
         if (registrationsOutDto.isEmpty()) {

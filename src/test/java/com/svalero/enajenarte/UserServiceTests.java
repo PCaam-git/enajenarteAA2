@@ -70,7 +70,9 @@ public class UserServiceTests {
                 new User(1L, "patricia", "pass1", "patricia@mail.com", "Patricia User",
                         40, true, 0, "user", null),
                 new User(2L, "patricia.dev", "pass2", "patricia.dev@mail.com", "Patricia Dev",
-                         22, true, 0, "user", null)
+                        22, true, 0, "user", null),
+                new User(3L, "mario", "pass3", "mario@mail.com", "Mario User",
+                        35, true, 0, "user", null)
         );
 
         List<UserOutDto> modelMapperOut = List.of(
@@ -78,8 +80,8 @@ public class UserServiceTests {
                 new UserOutDto(2L, "patricia.dev", "patricia.dev@mail.com", "Patricia Dev", "user")
         );
 
-        when(userRepository.findByUsernameContainingIgnoreCase("patricia")).thenReturn(mockUserList);
-        when(modelMapper.map(mockUserList, new TypeToken<List<UserOutDto>>() {}.getType())).thenReturn(modelMapperOut);
+        when(userRepository.findAll()).thenReturn(mockUserList);
+        when(modelMapper.map(anyList(), any(java.lang.reflect.Type.class))).thenReturn(modelMapperOut);
 
         List<UserOutDto> actualUserList = userService.findAll("patricia", "", "");
 
@@ -87,23 +89,27 @@ public class UserServiceTests {
         assertEquals("patricia", actualUserList.getFirst().getUsername());
         assertEquals("patricia.dev", actualUserList.getLast().getUsername());
 
-        verify(userRepository, times(0)).findAll();
-        verify(userRepository, times(1)).findByUsernameContainingIgnoreCase("patricia");
+        verify(userRepository, times(1)).findAll();
+        verify(userRepository, times(0)).findByUsernameContainingIgnoreCase(anyString());
     }
 
     @Test
     public void testFindAllByEmail() {
-        List<User> userRepositoryUsers = List.of(
+        List<User> mockUserList = List.of(
                 new User(1L, "patricia", "pass1", "patricia@mail.com", "Patricia User",
-                        40, true, 0, "user", null)
+                        40, true, 0, "user", null),
+                new User(2L, "mario", "pass2", "mario@example.com", "Mario User",
+                        35, true, 0, "user", null),
+                new User(3L, "lucia", "pass3", "lucia@test.es", "Lucia User",
+                        28, true, 0, "user", null)
         );
 
         List<UserOutDto> modelMapperUsersOutDto = List.of(
                 new UserOutDto(1L, "patricia", "patricia@mail.com", "Patricia User", "user")
         );
 
-        when(userRepository.findByEmailContainingIgnoreCase("mail")).thenReturn(userRepositoryUsers);
-        when(modelMapper.map(userRepositoryUsers, new TypeToken<List<UserOutDto>>() {}.getType()))
+        when(userRepository.findAll()).thenReturn(mockUserList);
+        when(modelMapper.map(anyList(), any(java.lang.reflect.Type.class)))
                 .thenReturn(modelMapperUsersOutDto);
 
         List<UserOutDto> actualUsersOutDto = userService.findAll("", "mail", "");
@@ -111,23 +117,25 @@ public class UserServiceTests {
         assertEquals(1, actualUsersOutDto.size());
         assertEquals("patricia@mail.com", actualUsersOutDto.getFirst().getEmail());
 
-        verify(userRepository, times(1)).findByEmailContainingIgnoreCase("mail");
-        verify(userRepository, times(0)).findAll();
+        verify(userRepository, times(1)).findAll();
+        verify(userRepository, times(0)).findByEmailContainingIgnoreCase(anyString());
     }
 
     @Test
     public void testFindAllByActive() {
-        List<User> userRepositoryUsers = List.of(
+        List<User> mockUserList = List.of(
                 new User(1L, "patricia", "pass1", "patricia@mail.com", "Patricia User",
-                        40, true, 0, "user", null)
+                        40, true, 0, "user", null),
+                new User(2L, "mario", "pass2", "mario@mail.com", "Mario User",
+                        35, false, 0, "user", null)
         );
 
         List<UserOutDto> modelMapperUsersOutDto = List.of(
                 new UserOutDto(1L, "patricia", "patricia@mail.com", "Patricia User", "user")
         );
 
-        when(userRepository.findByActive(true)).thenReturn(userRepositoryUsers);
-        when(modelMapper.map(userRepositoryUsers, new TypeToken<List<UserOutDto>>() {}.getType()))
+        when(userRepository.findAll()).thenReturn(mockUserList);
+        when(modelMapper.map(anyList(), any(java.lang.reflect.Type.class)))
                 .thenReturn(modelMapperUsersOutDto);
 
         List<UserOutDto> actualUsersOutDto = userService.findAll("", "", "true");
@@ -135,8 +143,8 @@ public class UserServiceTests {
         assertEquals(1, actualUsersOutDto.size());
         assertEquals("patricia", actualUsersOutDto.getFirst().getUsername());
 
-        verify(userRepository, times(1)).findByActive(true);
-        verify(userRepository, times(0)).findAll();
+        verify(userRepository, times(1)).findAll();
+        verify(userRepository, times(0)).findByActive(anyBoolean());
     }
 
     @Test

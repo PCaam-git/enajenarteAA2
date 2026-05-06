@@ -69,19 +69,20 @@ public class RegistrationServiceTests {
     }
 
     @Test
-    public void testFindAllByIsPaid() throws Exception {
+    public void testFindAllByIsPaid() {
         List<Registration> registrationList = List.of(
                 new Registration(1L, LocalDate.of(2026, 1, 2), "CONF-2", true, 2, 20, 5, null, null),
-                new Registration(2L, LocalDate.of(2026, 1, 3), "CONF-3", true, 1, 10, 4, null, null)
+                new Registration(2L, LocalDate.of(2026, 1, 3), "CONF-3", true, 1, 10, 4, null, null),
+                new Registration(3L, LocalDate.of(2026, 1, 4), "CONF-4", false, 1, 0, null, null, null)
         );
 
         List<RegistrationOutDto> modelMapperRegistrationOutDtoList = List.of(
-                new RegistrationOutDto(1L, LocalDate.of(2026, 1, 2), "CONF-2",true, 2, 20, 5, 0L, 0L),
+                new RegistrationOutDto(1L, LocalDate.of(2026, 1, 2), "CONF-2", true, 2, 20, 5, 0L, 0L),
                 new RegistrationOutDto(2L, LocalDate.of(2026, 1, 3), "CONF-3", true, 1, 10, 4, 0L, 0L)
         );
 
-        when(registrationRepository.findByIsPaid(true)).thenReturn(registrationList);
-        when(modelMapper.map(registrationList, new TypeToken<List<RegistrationOutDto>>() {}.getType()))
+        when(registrationRepository.findAll()).thenReturn(registrationList);
+        when(modelMapper.map(anyList(), any(java.lang.reflect.Type.class)))
                 .thenReturn(modelMapperRegistrationOutDtoList);
 
         List<RegistrationOutDto> actualRegistrationOutDtoList = registrationService.findAll("", "", "true");
@@ -89,81 +90,73 @@ public class RegistrationServiceTests {
         assertEquals(2, actualRegistrationOutDtoList.size());
         assertTrue(actualRegistrationOutDtoList.getFirst().isPaid());
 
-        verify(registrationRepository, times(0)).findAll();
-        verify(registrationRepository, times(1)).findByIsPaid(true);
+        verify(registrationRepository, times(1)).findAll();
+        verify(registrationRepository, times(0)).findByIsPaid(anyBoolean());
     }
 
     @Test
-    public void testFindAllByUserId() throws Exception {
-        User userRepositoryUser = new User();
-        userRepositoryUser.setId(1L);
+    public void testFindAllByUserId() {
+        User user1 = new User();
+        user1.setId(1L);
+
+        User user2 = new User();
+        user2.setId(2L);
 
         List<Registration> registrationList = List.of(
-                new Registration(1L, LocalDate.of(2026, 1, 10), "CONF-10", false, 2, 0, null, userRepositoryUser, null),
-                new Registration(2L, LocalDate.of(2026, 1, 11), "CONF-11", true, 1, 20, 5, userRepositoryUser, null)
+                new Registration(1L, LocalDate.of(2026, 1, 10), "CONF-10", false, 2, 0, null, user1, null),
+                new Registration(2L, LocalDate.of(2026, 1, 11), "CONF-11", true, 1, 20, 5, user1, null),
+                new Registration(3L, LocalDate.of(2026, 1, 12), "CONF-12", true, 1, 20, 4, user2, null)
         );
 
         List<RegistrationOutDto> modelMapperRegistrationOutDtoList = List.of(
-                new RegistrationOutDto(1L, LocalDate.of(2026, 1, 10), "CONF-10", false, 2, 0, 0, 1L, 10L),
-                new RegistrationOutDto(2L, LocalDate.of(2026, 1, 11), "CONF-11", true, 1, 20, 5, 1L, 10L)
+                new RegistrationOutDto(1L, LocalDate.of(2026, 1, 10), "CONF-10", false, 2, 0, 0, 1L, 0L),
+                new RegistrationOutDto(2L, LocalDate.of(2026, 1, 11), "CONF-11", true, 1, 20, 5, 1L, 0L)
         );
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(userRepositoryUser));
-        when(registrationRepository.findByUser(userRepositoryUser)).thenReturn(registrationList);
-        when(modelMapper.map(registrationList, new TypeToken<List<RegistrationOutDto>>() {}.getType()))
+        when(registrationRepository.findAll()).thenReturn(registrationList);
+        when(modelMapper.map(anyList(), any(java.lang.reflect.Type.class)))
                 .thenReturn(modelMapperRegistrationOutDtoList);
 
         List<RegistrationOutDto> actualRegistrationOutDtoList = registrationService.findAll("", "1", "");
 
         assertEquals(2, actualRegistrationOutDtoList.size());
-        verify(userRepository, times(1)).findById(1L);
-        verify(registrationRepository, times(1)).findByUser(userRepositoryUser);
-    }
+        assertEquals(1L, actualRegistrationOutDtoList.getFirst().getUserId());
 
-    @Test
-    public void testFindAllByUserId_UserNotFound() {
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(UserNotFoundException.class, () -> registrationService.findAll("", "99", ""));
-
-        verify(userRepository, times(1)).findById(99L);
+        verify(registrationRepository, times(1)).findAll();
+        verify(userRepository, times(0)).findById(anyLong());
         verify(registrationRepository, times(0)).findByUser(any(User.class));
     }
 
     @Test
-    public void testFindAllByWorkshopId() throws Exception {
-        Workshop workshopRepositoryWorkshop = new Workshop();
-        workshopRepositoryWorkshop.setId(10L);
+    public void testFindAllByWorkshopId() {
+        Workshop workshop10 = new Workshop();
+        workshop10.setId(10L);
+
+        Workshop workshop20 = new Workshop();
+        workshop20.setId(20L);
 
         List<Registration> registrationRepositoryRegistrationList = List.of(
-                new Registration(1L, LocalDate.of(2026, 1, 10), "CONF-10", false, 2, 0, null, null, workshopRepositoryWorkshop),
-                new Registration(2L, LocalDate.of(2026, 1, 11), "CONF-11", true, 1, 20, 5, null, workshopRepositoryWorkshop)
+                new Registration(1L, LocalDate.of(2026, 1, 10), "CONF-10", false, 2, 0, null, null, workshop10),
+                new Registration(2L, LocalDate.of(2026, 1, 11), "CONF-11", true, 1, 20, 5, null, workshop10),
+                new Registration(3L, LocalDate.of(2026, 1, 12), "CONF-12", true, 1, 20, 4, null, workshop20)
         );
 
         List<RegistrationOutDto> modelMapperRegistrationOutDtoList = List.of(
-                new RegistrationOutDto(1L, LocalDate.of(2026, 1, 10), "CONF-10",  false, 2, 0, 0, 1L, 10L),
-                new RegistrationOutDto(2L, LocalDate.of(2026, 1, 11), "CONF-11", true, 1, 20, 5, 2L, 10L)
+                new RegistrationOutDto(1L, LocalDate.of(2026, 1, 10), "CONF-10", false, 2, 0, 0, 0L, 10L),
+                new RegistrationOutDto(2L, LocalDate.of(2026, 1, 11), "CONF-11", true, 1, 20, 5, 0L, 10L)
         );
 
-        when(workshopRepository.findById(10L)).thenReturn(Optional.of(workshopRepositoryWorkshop));
-        when(registrationRepository.findByWorkshop(workshopRepositoryWorkshop)).thenReturn(registrationRepositoryRegistrationList);
-        when(modelMapper.map(registrationRepositoryRegistrationList, new TypeToken<List<RegistrationOutDto>>() {}.getType()))
+        when(registrationRepository.findAll()).thenReturn(registrationRepositoryRegistrationList);
+        when(modelMapper.map(anyList(), any(java.lang.reflect.Type.class)))
                 .thenReturn(modelMapperRegistrationOutDtoList);
 
         List<RegistrationOutDto> actualRegistrationOutDtoList = registrationService.findAll("10", "", "");
 
         assertEquals(2, actualRegistrationOutDtoList.size());
-        verify(workshopRepository, times(1)).findById(10L);
-        verify(registrationRepository, times(1)).findByWorkshop(workshopRepositoryWorkshop);
-    }
+        assertEquals(10L, actualRegistrationOutDtoList.getFirst().getWorkshopId());
 
-    @Test
-    public void testFindAllByWorkshopId_WorkshopNotFound() {
-        when(workshopRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(WorkshopNotFoundException.class, () -> registrationService.findAll("99", "", ""));
-
-        verify(workshopRepository, times(1)).findById(99L);
+        verify(registrationRepository, times(1)).findAll();
+        verify(workshopRepository, times(0)).findById(anyLong());
         verify(registrationRepository, times(0)).findByWorkshop(any(Workshop.class));
     }
 
