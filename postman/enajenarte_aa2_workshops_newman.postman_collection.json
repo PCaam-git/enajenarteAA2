@@ -1,0 +1,924 @@
+{
+  "info": {
+    "_postman_id": "674f3d56-2891-4ca9-a337-cbca5bc6a424",
+    "name": "Enajenarte AA2 - Workshops Newman",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "48848621",
+    "_collection_link": "https://go.postman.co/collection/48848621-674f3d56-2891-4ca9-a337-cbca5bc6a424?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Crear speaker para pruebas",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "if (!pm.collectionVariables.get(\"runId\")) {\r",
+              "    pm.collectionVariables.set(\"runId\", Date.now());\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 201 Created\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Speaker creado y guardado\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json).to.have.property(\"id\");\r",
+              "    pm.collectionVariables.set(\"speakerId\", json.id);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"firstName\": \"Marina\",\r\n    \"lastName\": \"Sánchez\",\r\n    \"email\": \"marina_{{runId}}@enajenarte.com\",\r\n    \"speciality\": \"Oratoria\",\r\n    \"yearsExperience\": 8,\r\n    \"workshopHoursTotal\": 85.0,\r\n    \"available\": true,\r\n    \"joinDate\": \"2023-11-20\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/speakers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "speakers"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear Workshop A v2",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 201 Created\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Workshop A creado y guardado\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json).to.have.property(\"id\");\r",
+              "    pm.expect(json.name).to.eql(\"AA2 Workshop A \" + pm.collectionVariables.get(\"runId\"));\r",
+              "    pm.collectionVariables.set(\"workshopAId\", json.id);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"AA2 Workshop A {{runId}}\",\r\n  \"description\": \"Taller de prueba A para Newman\",\r\n  \"startDate\": \"2027-02-10\",\r\n  \"durationMinutes\": 90,\r\n  \"price\": 20,\r\n  \"maxCapacity\": 25,\r\n  \"isOnline\": true,\r\n  \"speakerId\": \"{{speakerId}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/workshops",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "workshops"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Listar workshops v2",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200 OK o 204 No Content\", function () {\r",
+              "    pm.expect([200, 204]).to.include(pm.response.code);\r",
+              "});\r",
+              "\r",
+              "if (pm.response.code === 200) {\r",
+              "    pm.test(\"La respuesta es una lista y contiene campos v2\", function () {\r",
+              "        const json = pm.response.json();\r",
+              "        pm.expect(json).to.be.an(\"array\");\r",
+              "\r",
+              "        const workshop = json.find(item => item.id === Number(pm.collectionVariables.get(\"workshopAId\")));\r",
+              "        pm.expect(workshop).to.not.be.undefined;\r",
+              "        pm.expect(workshop).to.have.property(\"maxCapacity\");\r",
+              "        pm.expect(workshop).to.have.property(\"speakerName\");\r",
+              "    });\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/workshops",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "workshops"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Obtener workshop A por id",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200 OK\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Workshop A recuperado por id\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json.id).to.eql(Number(pm.collectionVariables.get(\"workshopAId\")));\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{baseUrl}}/workshops/{{workshopAId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "workshops",
+            "{{workshopAId}}"
+          ],
+          "query": [
+            {
+              "key": "",
+              "value": "",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear workshop duplicado v2",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 409 Conflict\", function () {\r",
+              "    pm.response.to.have.status(409);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Error de duplicado controlado\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json.code).to.eql(409);\r",
+              "    pm.expect(json.title).to.eql(\"conflict\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"AA2 Workshop A {{runId}}\",\r\n  \"description\": \"Intento de duplicado\",\r\n  \"startDate\": \"2027-02-10\",\r\n  \"durationMinutes\": 90,\r\n  \"price\": 20,\r\n  \"maxCapacity\": 25,\r\n  \"isOnline\": true,\r\n  \"speakerId\": \"{{speakerId}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/workshops",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "workshops"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Modificar workshop A v2",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200 OK\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Workshop A modificado\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json.id).to.eql(Number(pm.collectionVariables.get(\"workshopAId\")));\r",
+              "    pm.expect(json.name).to.eql(\"AA2 Workshop A Modificado \" + pm.collectionVariables.get(\"runId\"));\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"AA2 Workshop A Modificado {{runId}}\",\r\n  \"description\": \"Taller A modificado para Newman\",\r\n  \"startDate\": \"2027-02-11\",\r\n  \"durationMinutes\": 120,\r\n  \"price\": 25,\r\n  \"maxCapacity\": 30,\r\n  \"isOnline\": true,\r\n  \"speakerId\": \"{{speakerId}}\"\r\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/workshops/{{workshopAId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "workshops",
+            "{{workshopAId}}"
+          ],
+          "query": [
+            {
+              "key": "",
+              "value": "",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear workshop B v2",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 201 Created\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Workshop B creado y guardado\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json).to.have.property(\"id\");\r",
+              "    pm.collectionVariables.set(\"workshopBId\", json.id);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"AA2 Workshop B {{runId}}\",\r\n  \"description\": \"Taller B para prueba de duplicado en PUT\",\r\n  \"startDate\": \"2027-05-10\",\r\n  \"durationMinutes\": 180,\r\n  \"price\": 80,\r\n  \"maxCapacity\": 15,\r\n  \"isOnline\": false,\r\n  \"speakerId\": \"{{speakerId}}\"\r\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/workshops",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "workshops"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Modificar B para duplicar A v2",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 409 Conflict\", function () {\r",
+              "    pm.response.to.have.status(409);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Error de duplicado en PUT controlado\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json.code).to.eql(409);\r",
+              "    pm.expect(json.title).to.eql(\"conflict\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"AA2 Workshop A Modificado {{runId}}\",\r\n  \"description\": \"Intento de duplicar A\",\r\n  \"startDate\": \"2027-02-11\",\r\n  \"durationMinutes\": 120,\r\n  \"price\": 25,\r\n  \"maxCapacity\": 30,\r\n  \"isOnline\": true,\r\n  \"speakerId\": \"{{speakerId}}\"\r\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/workshops/{{workshopBId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "workshops",
+            "{{workshopBId}}"
+          ],
+          "query": [
+            {
+              "key": "",
+              "value": "",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear workshop para eliminar",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 201 Created\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Workshop para eliminar guardado\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.collectionVariables.set(\"workshopDeleteId\", json.id);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"AA2 Workshop Delete {{runId}}\",\r\n  \"description\": \"Workshop para eliminar sin inscripciones\",\r\n  \"startDate\": \"2027-06-10\",\r\n  \"durationMinutes\": 90,\r\n  \"price\": 20,\r\n  \"maxCapacity\": 25,\r\n  \"isOnline\": true,\r\n  \"speakerId\": \"{{speakerId}}\"\r\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/workshops",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "workshops"
+          ],
+          "query": [
+            {
+              "key": "",
+              "value": "",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Eliminar workshop sin inscripciones",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 204 No Content\", function () {\r",
+              "    pm.response.to.have.status(204);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/workshops/{{workshopDeleteId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "workshops",
+            "{{workshopDeleteId}}"
+          ],
+          "query": [
+            {
+              "key": "",
+              "value": "",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consulta workshop eliminado",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 404 Not Found\", function () {\r",
+              "    pm.response.to.have.status(404);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Error 404 controlado\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json.code).to.eql(404);\r",
+              "    pm.expect(json.title).to.eql(\"not-found\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{baseUrl}}/workshops/{{workshopDeleteId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "workshops",
+            "{{workshopDeleteId}}"
+          ],
+          "query": [
+            {
+              "key": "",
+              "value": "",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear user para inscripcion",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 201 Created\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Usuario creado y guardado\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json).to.have.property(\"id\");\r",
+              "    pm.collectionVariables.set(\"userId\", json.id);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"username\": \"usuario_inscripcion_{{runId}}\",\r\n  \"password\": \"usuario123\",\r\n  \"email\": \"user_{{runId}}@mail.com\",\r\n  \"fullName\": \"Usuario Inscripcion\",\r\n  \"age\": 30\r\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear workshop con inscripcion",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 201 Created\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Workshop con inscripción guardado\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.collectionVariables.set(\"workshopWithRegistrationId\", json.id);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"AA2 Workshop With Registration {{runId}}\",\r\n  \"description\": \"Workshop con inscripcion\",\r\n  \"startDate\": \"2027-07-10\",\r\n  \"durationMinutes\": 180,\r\n  \"price\": 80,\r\n  \"maxCapacity\": 15,\r\n  \"isOnline\": false,\r\n  \"speakerId\": \"{{speakerId}}\"\r\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/workshops",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "workshops"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear inscripcion",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 201 Created\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Inscripcion creada y guardada\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json).to.have.property(\"id\");\r",
+              "    pm.collectionVariables.set(\"registrationId\", json.id);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": {{userId}},\n  \"workshopId\": {{workshopWithRegistrationId}},\n  \"numberOfTickets\": 1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/registrations",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "registrations"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Eliminar workshop con inscripcion v2",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 409 Conflict\", function () {\r",
+              "    pm.response.to.have.status(409);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Error de inscripciones asociadas controlado\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json.code).to.eql(409);\r",
+              "    pm.expect(json.title).to.eql(\"conflict\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/workshops/{{workshopWithRegistrationId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "workshops",
+            "{{workshopWithRegistrationId}}"
+          ],
+          "query": [
+            {
+              "key": "",
+              "value": "",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "speakerId",
+      "value": ""
+    },
+    {
+      "key": "workshopAId",
+      "value": ""
+    },
+    {
+      "key": "workshopBId",
+      "value": ""
+    },
+    {
+      "key": "workshopDeleteId",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "registrationId",
+      "value": ""
+    },
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "workshopWithRegistrationId",
+      "value": ""
+    }
+  ]
+}
