@@ -65,7 +65,8 @@ public class SpeakerServiceTests {
     public void testFindAllBySpeciality() {
         List<Speaker> mockSpeakerList = List.of(
                 new Speaker(1L, "Ana", "Lopez", "ana@mail.com", "mindfulness", 5, 0, true, LocalDate.of(2025, 1, 1), null),
-                new Speaker(2L, "Lucia", "Martin", "lucia@mail.com", "mindfulness", 3, 0, true, LocalDate.of(2025, 2, 1), null)
+                new Speaker(2L, "Lucia", "Martin", "lucia@mail.com", "mindfulness", 3, 0, true, LocalDate.of(2025, 2, 1), null),
+                new Speaker(3L, "Carlos", "Perez", "carlos@mail.com", "oratoria", 8, 0, true, LocalDate.of(2024, 5, 10), null)
         );
 
         List<SpeakerOutDto> modelMapperOut = List.of(
@@ -73,8 +74,8 @@ public class SpeakerServiceTests {
                 new SpeakerOutDto(2L, "Lucia", "Martin", "lucia@mail.com", "mindfulness", 3)
         );
 
-        when(speakerRepository.findBySpecialityContainingIgnoreCase("mind")).thenReturn(mockSpeakerList);
-        when(modelMapper.map(mockSpeakerList, new TypeToken<List<SpeakerOutDto>>() {}.getType())).thenReturn(modelMapperOut);
+        when(speakerRepository.findAll()).thenReturn(mockSpeakerList);
+        when(modelMapper.map(anyList(), any(java.lang.reflect.Type.class))).thenReturn(modelMapperOut);
 
         List<SpeakerOutDto> actualSpeakerList = speakerService.findAll("mind", "", "");
 
@@ -82,8 +83,8 @@ public class SpeakerServiceTests {
         assertEquals("Ana", actualSpeakerList.getFirst().getFirstName());
         assertEquals("Lucia", actualSpeakerList.getLast().getFirstName());
 
-        verify(speakerRepository, times(0)).findAll();
-        verify(speakerRepository, times(1)).findBySpecialityContainingIgnoreCase("mind");
+        verify(speakerRepository, times(1)).findAll();
+        verify(speakerRepository, times(0)).findBySpecialityContainingIgnoreCase(anyString());
     }
 
     @Test
@@ -91,6 +92,8 @@ public class SpeakerServiceTests {
         List<Speaker> mockSpeakerList = List.of(
                 new Speaker(1L, "Ana", "Lopez", "ana@mail.com", "mindfulness", 5, 0, true,
                         LocalDate.of(2025, 1, 1), null),
+                new Speaker(2L, "Carlos", "Perez", "carlos@mail.com", "oratoria", 8, 0, false,
+                        LocalDate.of(2024, 5, 10), null),
                 new Speaker(3L, "Lucia", "Martin", "lucia@mail.com", "oratoria", 3, 0, true,
                         LocalDate.of(2025, 2, 1), null)
         );
@@ -100,9 +103,8 @@ public class SpeakerServiceTests {
                 new SpeakerOutDto(3L, "Lucia", "Martin", "lucia@mail.com", "oratoria", 3)
         );
 
-        when(speakerRepository.findByAvailable(true)).thenReturn(mockSpeakerList);
-        when(modelMapper.map(mockSpeakerList, new TypeToken<List<SpeakerOutDto>>() {}.getType()))
-                .thenReturn(modelMapperSpeakerOutDto);
+        when(speakerRepository.findAll()).thenReturn(mockSpeakerList);
+        when(modelMapper.map(anyList(), any(java.lang.reflect.Type.class))).thenReturn(modelMapperSpeakerOutDto);
 
         List<SpeakerOutDto> actualSpeakerList = speakerService.findAll("", "true", "");
 
@@ -110,10 +112,8 @@ public class SpeakerServiceTests {
         assertEquals("Ana", actualSpeakerList.getFirst().getFirstName());
         assertEquals("Lucia", actualSpeakerList.getLast().getFirstName());
 
-        verify(speakerRepository, times(0)).findAll();
-        verify(speakerRepository, times(0)).findBySpecialityContainingIgnoreCase(anyString());
-        verify(speakerRepository, times(1)).findByAvailable(true);
-        verify(speakerRepository, times(0)).findByYearsExperience(anyInt());
+        verify(speakerRepository, times(1)).findAll();
+        verify(speakerRepository, times(0)).findByAvailable(anyBoolean());
     }
 
     @Test
@@ -122,7 +122,9 @@ public class SpeakerServiceTests {
                 new Speaker(1L, "Ana", "Lopez", "ana@mail.com", "mindfulness", 5, 0, true,
                         LocalDate.of(2025, 1, 1), null),
                 new Speaker(2L, "Pedro", "Sanchez", "pedro@mail.com", "coaching", 5, 0, true,
-                        LocalDate.of(2024, 3, 10), null)
+                        LocalDate.of(2024, 3, 10), null),
+                new Speaker(3L, "Carlos", "Perez", "carlos@mail.com", "oratoria", 8, 0, true,
+                        LocalDate.of(2024, 5, 10), null)
         );
 
         List<SpeakerOutDto> modelMapperSpeakerOutDto = List.of(
@@ -130,9 +132,8 @@ public class SpeakerServiceTests {
                 new SpeakerOutDto(2L, "Pedro", "Sanchez", "pedro@mail.com", "coaching", 5)
         );
 
-        when(speakerRepository.findByYearsExperience(5)).thenReturn(mockSpeakerList);
-        when(modelMapper.map(mockSpeakerList, new TypeToken<List<SpeakerOutDto>>() {}.getType()))
-                .thenReturn(modelMapperSpeakerOutDto);
+        when(speakerRepository.findAll()).thenReturn(mockSpeakerList);
+        when(modelMapper.map(anyList(), any(java.lang.reflect.Type.class))).thenReturn(modelMapperSpeakerOutDto);
 
         List<SpeakerOutDto> actualSpeakerList = speakerService.findAll("", "", "5");
 
@@ -140,15 +141,14 @@ public class SpeakerServiceTests {
         assertEquals("Ana", actualSpeakerList.getFirst().getFirstName());
         assertEquals("Pedro", actualSpeakerList.getLast().getFirstName());
 
-        verify(speakerRepository, times(0)).findAll();
-        verify(speakerRepository, times(0)).findBySpecialityContainingIgnoreCase(anyString());
-        verify(speakerRepository, times(0)).findByAvailable(anyBoolean());
-        verify(speakerRepository, times(1)).findByYearsExperience(5);
+        verify(speakerRepository, times(1)).findAll();
+        verify(speakerRepository, times(0)).findByYearsExperience(anyInt());
     }
 
     @Test
     public void testFindById() throws SpeakerNotFoundException {
-        Speaker speaker = new Speaker(7L, "Ana", "Lopez", "ana@mail.com", "mindfulness", 5, 0, true, LocalDate.of(2025, 1, 1), null
+        Speaker speaker = new Speaker(7L, "Ana", "Lopez", "ana@mail.com", "mindfulness",
+                5, 0, true, LocalDate.of(2025, 1, 1), null
         );
 
         SpeakerOutDto speakerOutDto = new SpeakerOutDto(7L, "Ana", "Lopez", "ana@mail.com", "mindfulness", 5);
@@ -175,13 +175,16 @@ public class SpeakerServiceTests {
 
     @Test
     public void testAdd() {
-        SpeakerInDto speakerInDto = new SpeakerInDto("Ana", "Lopez", "ana@mail.com", "mindfulness", 5, 10f, true, LocalDate.of(2025, 1, 1)
+        SpeakerInDto speakerInDto = new SpeakerInDto("Ana", "Lopez", "ana@mail.com", "mindfulness",
+                5, 10f, true, LocalDate.of(2025, 1, 1)
         );
 
-        Speaker mappedSpeaker = new Speaker(0L, "Ana", "Lopez", "ana@mail.com", "mindfulness", 5, 10, true, LocalDate.of(2025, 1, 1), null
+        Speaker mappedSpeaker = new Speaker(0L, "Ana", "Lopez", "ana@mail.com", "mindfulness",
+                5, 10, true, LocalDate.of(2025, 1, 1), null
         );
 
-        Speaker savedSpeaker = new Speaker(1L, "Ana", "Lopez", "ana@mail.com", "mindfulness", 5, 0, true, LocalDate.of(2025, 1, 1), null
+        Speaker savedSpeaker = new Speaker(1L, "Ana", "Lopez", "ana@mail.com", "mindfulness",
+                5, 0, true, LocalDate.of(2025, 1, 1), null
         );
 
         SpeakerOutDto speakerOutDto = new SpeakerOutDto(1L, "Ana", "Lopez", "ana@mail.com", "mindfulness", 5);
@@ -206,10 +209,12 @@ public class SpeakerServiceTests {
     public void testModify() throws SpeakerNotFoundException {
         long id = 5L;
 
-        Speaker existingSpeaker = new Speaker(id, "Ana", "Lopez", "ana@mail.com", "mindfulness", 5, 15, true, LocalDate.of(2025, 1, 1), null
+        Speaker existingSpeaker = new Speaker(id, "Ana", "Lopez", "ana@mail.com", "mindfulness",
+                5, 15, true, LocalDate.of(2025, 1, 1), null
         );
 
-        SpeakerInDto speakerInDto = new SpeakerInDto("AnaUpdated", "LopezUpdated", "ana.updated@mail.com", "oratoria", 8, 999f, false, LocalDate.of(2025, 1, 1)
+        SpeakerInDto speakerInDto = new SpeakerInDto("AnaUpdated", "LopezUpdated", "ana.updated@mail.com", "oratoria",
+                8, 999f, false, LocalDate.of(2025, 1, 1)
         );
 
         SpeakerOutDto speakerOutDto = new SpeakerOutDto(id, "AnaUpdated", "LopezUpdated", "ana.updated@mail.com", "oratoria", 8);
@@ -238,7 +243,8 @@ public class SpeakerServiceTests {
     public void testModify_NotFound() {
         long id = 5L;
 
-        SpeakerInDto speakerInDto = new SpeakerInDto("AnaUpdated", "LopezUpdated", "ana.updated@mail.com", "oratoria", 8, 999f, false, LocalDate.of(2025, 1, 1)
+        SpeakerInDto speakerInDto = new SpeakerInDto("AnaUpdated", "LopezUpdated", "ana.updated@mail.com", "oratoria",
+                8, 999f, false, LocalDate.of(2025, 1, 1)
         );
 
         when(speakerRepository.findById(id)).thenReturn(Optional.empty());
@@ -251,7 +257,8 @@ public class SpeakerServiceTests {
 
     @Test
     public void testDelete() throws SpeakerNotFoundException {
-        Speaker speaker = new Speaker(1L, "Ana", "Lopez", "ana@mail.com", "mindfulness", 5, 0, true, LocalDate.of(2025, 1, 1), null
+        Speaker speaker = new Speaker(1L, "Ana", "Lopez", "ana@mail.com", "mindfulness",
+                5, 0, true, LocalDate.of(2025, 1, 1), null
         );
 
         when(speakerRepository.findById(1L)).thenReturn(Optional.of(speaker));

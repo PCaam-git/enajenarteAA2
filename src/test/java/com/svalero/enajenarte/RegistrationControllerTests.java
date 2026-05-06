@@ -75,7 +75,7 @@ public class RegistrationControllerTests {
                 new RegistrationOutDto(3L, LocalDate.of(2026, 1, 12),"CONF-3", true, 1, 20, 4, 1L, 11L)
         );
 
-        when(registrationService.findAll("1", "", "")).thenReturn(registrationOutDtoList);
+        when(registrationService.findAll("", "1", "")).thenReturn(registrationOutDtoList);
 
         MvcResult mvcResult = mockMvc.perform(
                         MockMvcRequestBuilders.get("/registrations")

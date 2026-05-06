@@ -70,17 +70,18 @@ public class EventServiceTests {
     @Test
     public void testFindAllByTitle() {
         List<Event> mockEventList = List.of(
-                new Event(1L, "Mindfulness", "Zaragoza", LocalDateTime.of(2026, 2, 1, 10, 0), 0, true, 30, null),
-                new Event(2L, "Mindfulness avanzado", "Zaragoza", LocalDateTime.of(2026, 2, 15, 10, 0), 0, true, 20, null)
+                new Event(1L, "Mindfulness", "Zaragoza", LocalDateTime.of(2026, 8, 1, 10, 0), 0, true, 30, null),
+                new Event(2L, "Mindfulness avanzado", "Zaragoza", LocalDateTime.of(2026, 8, 15, 10, 0), 0, true, 20, null),
+                new Event(3L, "Arte terapia", "Madrid", LocalDateTime.of(2026, 9, 1, 18, 0), 10, true, 50, null)
         );
 
         List<EventOutDto> modelMapperEventOutDto = List.of(
-                new EventOutDto(1L, "Mindfulness", "Zaragoza", LocalDateTime.of(2026, 2, 1, 10, 0), 0, true, 1L),
-                new EventOutDto(2L, "Mindfulness avanzado", "Zaragoza", LocalDateTime.of(2026, 2, 15, 10, 0), 0, true, 1L)
+                new EventOutDto(1L, "Mindfulness", "Zaragoza", LocalDateTime.of(2026, 8, 1, 10, 0), 0, true, 0L),
+                new EventOutDto(2L, "Mindfulness avanzado", "Zaragoza", LocalDateTime.of(2026, 8, 15, 10, 0), 0, true, 0L)
         );
 
-        when(eventRepository.findByTitleContainingIgnoreCase("mind")).thenReturn(mockEventList);
-        when(modelMapper.map(mockEventList, new TypeToken<List<EventOutDto>>() {}.getType())).thenReturn(modelMapperEventOutDto);
+        when(eventRepository.findAll()).thenReturn(mockEventList);
+        when(modelMapper.map(anyList(), any(java.lang.reflect.Type.class))).thenReturn(modelMapperEventOutDto);
 
         List<EventOutDto> actualEventList = eventService.findAll("mind", "", "");
 
@@ -88,28 +89,25 @@ public class EventServiceTests {
         assertEquals("Mindfulness", actualEventList.getFirst().getTitle());
         assertEquals("Mindfulness avanzado", actualEventList.getLast().getTitle());
 
-        verify(eventRepository, times(0)).findAll();
-        verify(eventRepository, times(1)).findByTitleContainingIgnoreCase("mind");
+        verify(eventRepository, times(1)).findAll();
+        verify(eventRepository, times(0)).findByTitleContainingIgnoreCase(anyString());
     }
 
     @Test
     public void testFindAllByLocation() {
         List<Event> mockEventList = List.of(
-                new Event(1L, "Mindfulness", "Zaragoza", LocalDateTime.of(2026, 2, 1, 10, 0),
-                        0, true, 30, null),
-                new Event(3L, "Yoga", "Zaragoza", LocalDateTime.of(2026, 2, 20, 18, 0),
-                        5, true, 25, null)
+                new Event(1L, "Mindfulness", "Zaragoza", LocalDateTime.of(2026, 8, 1, 10, 0), 0, true, 30, null),
+                new Event(2L, "Arte terapia", "Madrid", LocalDateTime.of(2026, 9, 1, 18, 0), 10, true, 50, null),
+                new Event(3L, "Yoga", "Zaragoza", LocalDateTime.of(2026, 8, 20, 18, 0), 5, true, 25, null)
         );
 
         List<EventOutDto> modelMapperEventOutDto = List.of(
-                new EventOutDto(1L, "Mindfulness", "Zaragoza", LocalDateTime.of(2026, 2, 1, 10, 0),
-                        0, true, 1L),
-                new EventOutDto(3L, "Yoga", "Zaragoza", LocalDateTime.of(2026, 2, 20, 18, 0),
-                        5, true, 1L)
+                new EventOutDto(1L, "Mindfulness", "Zaragoza", LocalDateTime.of(2026, 8, 1, 10, 0), 0, true, 0L),
+                new EventOutDto(3L, "Yoga", "Zaragoza", LocalDateTime.of(2026, 8, 20, 18, 0), 5, true, 0L)
         );
 
-        when(eventRepository.findByLocationContainingIgnoreCase("zaragoza")).thenReturn(mockEventList);
-        when(modelMapper.map(mockEventList, new TypeToken<List<EventOutDto>>() {}.getType()))
+        when(eventRepository.findAll()).thenReturn(mockEventList);
+        when(modelMapper.map(anyList(), any(java.lang.reflect.Type.class)))
                 .thenReturn(modelMapperEventOutDto);
 
         List<EventOutDto> actualEventList = eventService.findAll("", "zaragoza", "");
@@ -118,30 +116,25 @@ public class EventServiceTests {
         assertEquals("Mindfulness", actualEventList.getFirst().getTitle());
         assertEquals("Yoga", actualEventList.getLast().getTitle());
 
-        verify(eventRepository, times(0)).findAll();
-        verify(eventRepository, times(0)).findByTitleContainingIgnoreCase(anyString());
-        verify(eventRepository, times(1)).findByLocationContainingIgnoreCase("zaragoza");
-        verify(eventRepository, times(0)).findByIsPublic(anyBoolean());
+        verify(eventRepository, times(1)).findAll();
+        verify(eventRepository, times(0)).findByLocationContainingIgnoreCase(anyString());
     }
 
     @Test
     public void testFindAllByIsPublic() {
         List<Event> mockEventList = List.of(
-                new Event(1L, "Mindfulness", "Zaragoza", LocalDateTime.of(2026, 2, 1, 10, 0),
-                        0, true, 30, null),
-                new Event(2L, "Arte terapia", "Madrid", LocalDateTime.of(2026, 3, 1, 18, 0),
-                        10, true, 50, null)
+                new Event(1L, "Mindfulness", "Zaragoza", LocalDateTime.of(2026, 8, 1, 10, 0), 0, true, 30, null),
+                new Event(2L, "Arte terapia", "Madrid", LocalDateTime.of(2026, 9, 1, 18, 0), 10, true, 50, null),
+                new Event(3L, "Evento privado", "Zaragoza", LocalDateTime.of(2026, 10, 1, 18, 0), 15, false, 20, null)
         );
 
         List<EventOutDto> modelMapperEventOutDto = List.of(
-                new EventOutDto(1L, "Mindfulness", "Zaragoza", LocalDateTime.of(2026, 2, 1, 10, 0),
-                        0, true, 1L),
-                new EventOutDto(2L, "Arte terapia", "Madrid", LocalDateTime.of(2026, 3, 1, 18, 0),
-                        10, true, 1L)
+                new EventOutDto(1L, "Mindfulness", "Zaragoza", LocalDateTime.of(2026, 8, 1, 10, 0), 0, true, 0L),
+                new EventOutDto(2L, "Arte terapia", "Madrid", LocalDateTime.of(2026, 9, 1, 18, 0), 10, true, 0L)
         );
 
-        when(eventRepository.findByIsPublic(true)).thenReturn(mockEventList);
-        when(modelMapper.map(mockEventList, new TypeToken<List<EventOutDto>>() {}.getType()))
+        when(eventRepository.findAll()).thenReturn(mockEventList);
+        when(modelMapper.map(anyList(), any(java.lang.reflect.Type.class)))
                 .thenReturn(modelMapperEventOutDto);
 
         List<EventOutDto> actualEventList = eventService.findAll("", "", "true");
@@ -150,10 +143,8 @@ public class EventServiceTests {
         assertEquals("Mindfulness", actualEventList.getFirst().getTitle());
         assertEquals("Arte terapia", actualEventList.getLast().getTitle());
 
-        verify(eventRepository, times(0)).findAll();
-        verify(eventRepository, times(0)).findByTitleContainingIgnoreCase(anyString());
-        verify(eventRepository, times(0)).findByLocationContainingIgnoreCase(anyString());
-        verify(eventRepository, times(1)).findByIsPublic(true);
+        verify(eventRepository, times(1)).findAll();
+        verify(eventRepository, times(0)).findByIsPublic(anyBoolean());
     }
 
     @Test

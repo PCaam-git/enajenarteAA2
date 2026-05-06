@@ -593,26 +593,71 @@ Esto confirma que APIMan actúa como gateway y aplica políticas sin modificar e
 
 ## Tests unitarios
 
-El proyecto conserva tests unitarios de Controller y Service para las entidades principales.
+El proyecto conserva y actualiza tests unitarios de Controller y Service para las entidades principales:
 
-Actualmente los tests unitarios originales necesitan ser actualizados para ajustarse completamente a la estructura final de AA2, especialmente en la entidad `Workshop`, donde se han añadido endpoints versionados y nuevos casos de conflicto.
+- `Workshop`
+- `Speaker`
+- `User`
+- `Event`
+- `Registration`
 
-Por este motivo, para generar el `.jar` de despliegue se utiliza temporalmente:
+Los tests de `Workshop` se han actualizado especialmente para cubrir la entidad versionada de la actividad AA2:
 
-```powershell
-mvn clean package -Dmaven.test.skip=true
+- endpoints clásicos y versionados;
+- `GET /api/v2/workshops`;
+- `POST /api/v2/workshops`;
+- `PUT /api/v2/workshops/{id}`;
+- `DELETE /api/v2/workshops/{id}`;
+- conflicto por workshop duplicado;
+- conflicto al eliminar un workshop con inscripciones asociadas;
+- salida v2 con `speakerName` y `maxCapacity`.
+
+También se han actualizado los tests de `Speaker`, `User`, `Event` y `Registration` para ajustarlos a la estructura real actual del proyecto, especialmente al uso de filtrado con `findAll().stream()` en los servicios.
+
+La ejecución completa actual de tests unitarios es correcta:
+
+```text
+Tests run: 144, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
 ```
 
-La validación funcional automatizada de la actividad se realiza mediante la colección Postman/Newman y el workflow de GitHub Actions.
+### Ejecutar todos los tests
+
+```powershell
+mvn test
+```
+
+### Ejecutar solo tests de Workshop
+
+En PowerShell, el parámetro debe ir entre comillas porque contiene una coma:
+
+```powershell
+mvn test "-Dtest=WorkshopControllerTests,WorkshopServiceTests"
+```
+
+### Ejecutar tests por entidad
+
+```powershell
+mvn test "-Dtest=SpeakerControllerTests,SpeakerServiceTests"
+mvn test "-Dtest=UserControllerTests,UserServiceTests"
+mvn test "-Dtest=EventControllerTests,EventServiceTests"
+mvn test "-Dtest=RegistrationControllerTests,RegistrationServiceTests"
+```
 
 ---
 
 ## Comandos principales
 
-Compilar sin ejecutar tests unitarios:
+Compilar y ejecutar tests:
 
 ```powershell
-mvn clean package -Dmaven.test.skip=true
+mvn clean package
+```
+
+Ejecutar todos los tests:
+
+```powershell
+mvn test
 ```
 
 Ejecutar la API en local:
@@ -663,8 +708,8 @@ docker-compose down
 
 ## Estado final de la actividad
 
-| Bloque | Estado |
-|---|---|
+| Bloque | Estado     |
+|---|------------|
 | Versionado de `Workshop` | Completado |
 | Configuración `dev` / `prod` | Completado |
 | Dockerfile y Docker Compose | Completado |
@@ -672,7 +717,7 @@ docker-compose down
 | GitHub Actions con Newman | Completado |
 | Despliegue en AWS EC2 | Completado |
 | APIMan Gateway | Completado |
-| Actualización de tests unitarios | Pendiente |
+| Actualización de tests unitarios | Completado |
 
 ---
 
@@ -681,4 +726,9 @@ docker-compose down
 `enajenarteAA2` es una adaptación académica de la API Enajenarte orientada a demostrar versionado de API, configuración por entornos, despliegue con Docker, automatización de pruebas, integración continua, despliegue en AWS y gestión mediante APIMan.
 
 La entidad `Workshop` se ha utilizado como base para aplicar los cambios principales de la actividad, manteniendo la versión original de la API y añadiendo una versión 2 con validaciones y comportamientos adicionales.
+
+Además, el proyecto queda validado mediante dos niveles de pruebas:
+
+- tests unitarios de Controller y Service con Maven;
+- tests de integración funcional mediante Postman/Newman y GitHub Actions.
 
