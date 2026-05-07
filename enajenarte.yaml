@@ -1,35 +1,58 @@
 openapi: 3.0.1
 info:
-  title: Enajenarte
-  description: API para la empresa Enajenarte
+  title: Enajenarte AA2 API
+  description: |
+    API REST del proyecto Enajenarte adaptada para la actividad AA2 de Acceso a Datos.
+
+    El proyecto mantiene los endpoints originales de la API base y añade versionado explícito sobre la entidad Workshop.
+    Para Workshop se conserva el endpoint base /workshops, se añade /api/v1/workshops como versión explícita equivalente a la respuesta original y se incorpora /api/v2/workshops con cambios en la salida y en el funcionamiento.
+
+    La versión 1 devuelve la estructura original con speakerId.
+    La versión 2 devuelve una salida enriquecida con maxCapacity y speakerName, y añade control de conflictos en POST, PUT y DELETE.
   version: 1.0.0
 servers:
-  - url: 'http://enajenarte.com'
-
+  - url: http://localhost:8080
+    description: Entorno local de desarrollo
+  - url: http://localhost:8085
+    description: Entorno Docker Compose local
+  - url: http://{ip-publica-ec2}:8085
+    description: Entorno desplegado en AWS EC2
+    variables:
+      ip-publica-ec2:
+        default: 0.0.0.0
+        description: IP pública de la instancia EC2
+  - url: http://gateway.local.gd:8080/Enajenarte/enajenarteApi/2.0
+    description: Gateway local de APIMan
 paths:
   #
-  #USERS ENDPOINTS
+  # USERS ENDPOINTS
   #
   /users:
     get:
-      summary: Obtener todos los usuarios
-      description: Devuelve una lista de usuarios con opciones de filtrado
+      summary: Devuelve la lista de usuarios
+      description: |
+        Devuelve una lista con los usuarios registrados.
+
+        Se permite filtrar usuarios por tres campos al mismo tiempo:
+          - **username**: filtra por nombre de usuario.
+          - **email**: filtra por correo electrónico.
+          - **active**: filtra por estado activo.
       parameters:
         - name: username
           in: query
-          description: Filtrar por nombre de usuario
+          description: Filtra por nombre de usuario
           required: false
           schema:
             type: string
         - name: email
           in: query
-          description: Filtrar por email
+          description: Filtra por email
           required: false
           schema:
             type: string
         - name: active
           in: query
-          description: Filtrar por estado activo
+          description: Filtra por estado activo
           required: false
           schema:
             type: string
@@ -46,34 +69,35 @@ paths:
                 example1:
                   value:
                     - id: 1
-                      username: "patricia"
-                      email: "patricia@mail.com"
-                      fullName: "Patricia User"
-                      role: "user"
+                      username: patricia
+                      email: patricia@mail.com
+                      fullName: Patricia User
+                      role: user
                 example2:
                   value:
                     - id: 2
-                      username: "admin"
-                      email: "admin@mail.com"
-                      fullName: "Admin User"
+                      username: admin
+                      email: admin@mail.com
+                      fullName: Admin User
                       role: admin
                     - id: 3
-                      username: "roberto"
-                      email: "roberto@mail.com"
-                      fullName: "Roberto Uno"
-                      role: "user"
+                      username: roberto
+                      email: roberto@mail.com
+                      fullName: Roberto Uno
+                      role: user
+        '204':
+          description: No existen usuarios que cumplan los filtros indicados
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerError'
-
     post:
       summary: Crear un nuevo usuario
       description: Registra un nuevo usuario en el sistema
       requestBody:
-        required: true
+        description: Datos del nuevo usuario
         content:
           application/json:
             schema:
@@ -81,17 +105,17 @@ paths:
             examples:
               example1:
                 value:
-                  username: "Patricia"
-                  password: "patricia123"
-                  email: "patricia@mail.com"
-                  fullName: "Patricia User"
+                  username: Patricia
+                  password: patricia123
+                  email: patricia@mail.com
+                  fullName: Patricia User
                   age: 25
               example2:
                 value:
-                  username: "Roberto"
-                  password: "roberto123"
-                  email: "roberto@mail.com"
-                  fullName: "Roberto Uno"
+                  username: Roberto
+                  password: roberto123
+                  email: roberto@mail.com
+                  fullName: Roberto Uno
                   age: 45
       responses:
         '201':
@@ -104,17 +128,17 @@ paths:
                 example1:
                   value:
                     id: 10
-                    username: "patricia"
-                    email: "patricia@mail.com"
-                    fullName: "Patricia User"
-                    role: "user"
+                    username: patricia
+                    email: patricia@mail.com
+                    fullName: Patricia User
+                    role: user
                 example2:
                   value:
                     id: 11
-                    username: "Roberto"
-                    email: "roberto@mail.com"
-                    fullName: "Roberto Uno"
-                    role: "user"
+                    username: Roberto
+                    email: roberto@mail.com
+                    fullName: Roberto Uno
+                    role: user
         '400':
           description: Bad request
           content:
@@ -134,6 +158,7 @@ paths:
       parameters:
         - name: id
           in: path
+          description: Identificador del usuario
           required: true
           schema:
             type: integer
@@ -149,42 +174,47 @@ paths:
                 example1:
                   value:
                     id: 1
-                    username: "patricia"
-                    email: "patricia@mail.com"
-                    fullName: "Patricia User"
-                    role: "user"
+                    username: patricia
+                    email: patricia@mail.com
+                    fullName: Patricia User
+                    role: user
                 example2:
                   value:
                     id: 2
-                    username: "admin"
-                    email: "admin@mail.com"
-                    fullName: "Admin User"
-                    role: "admin"
+                    username: admin
+                    email: admin@mail.com
+                    fullName: Admin User
+                    role: admin
         '404':
           description: User not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotFound'
+              example:
+                code: 404
+                title: not-found
+                message: The user does not exist
+                errors: {}
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerError'
-
     put:
       summary: Modificar usuario
       description: Actualiza un usuario existente
       parameters:
         - name: id
           in: path
+          description: Identificador del usuario
           required: true
           schema:
             type: integer
             format: int64
       requestBody:
-        required: true
+        description: Datos actualizados del usuario
         content:
           application/json:
             schema:
@@ -192,22 +222,21 @@ paths:
             examples:
               example1:
                 value:
-                  username: "patricia"
-                  password: "newpassword"
-                  email: "patricia@mail.com"
-                  fullName: "Patricia Updated"
-                  age: 25
+                  username: patricia.updated
+                  password: patricia123
+                  email: patricia.updated@mail.com
+                  fullName: Patricia Updated
+                  age: 26
               example2:
                 value:
-                  username: "roberto"
-                  password: "newpassword"
-                  email: "robertonewmail@mail.com"
-                  fullName: "Roberto Updated"
-                  age: 45
-
+                  username: roberto.updated
+                  password: roberto123
+                  email: roberto.updated@mail.com
+                  fullName: Roberto Updated
+                  age: 46
       responses:
         '200':
-          description: Usuario actualizado exitosamente
+          description: Usuario modificado exitosamente
           content:
             application/json:
               schema:
@@ -216,17 +245,17 @@ paths:
                 example1:
                   value:
                     id: 1
-                    username: "patricia"
-                    email: "patricia@mail.com"
-                    fullName: "Patricia Updated"
-                    role: "user"
+                    username: patricia.updated
+                    email: patricia.updated@mail.com
+                    fullName: Patricia Updated
+                    role: user
                 example2:
                   value:
                     id: 2
-                    username: "roberto"
-                    email: "robertonewmail@mail.com"
-                    fullName: "Roberto Updated"
-                    role: "user"
+                    username: roberto.updated
+                    email: roberto.updated@mail.com
+                    fullName: Roberto Updated
+                    role: user
         '400':
           description: Bad request
           content:
@@ -245,28 +274,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerError'
-
     delete:
       summary: Eliminar usuario
-      description: Elimina un usuario del sistema
+      description: Elimina un usuario existente
       parameters:
         - name: id
           in: path
+          description: Identificador del usuario
           required: true
           schema:
             type: integer
             format: int64
       responses:
         '204':
-          description: Usuario eliminado exitosamente
-          content:
-            application/json:
-              examples:
-                example1:
-                  value: {}
-                example2:
-                  value: {}
-
+          description: Usuario eliminado correctamente
         '404':
           description: User not found
           content:
@@ -280,1614 +301,2072 @@ paths:
               schema:
                 $ref: '#/components/schemas/InternalServerError'
 
-    # ========================================
-    # EVENTS ENDPOINTS
-    # ========================================
-  /events:
-      get:
-        summary: Obtener todos los eventos
-        description: Devuelve una lista de eventos con opciones de filtrado
-        parameters:
-          - name: title
-            in: query
-            description: Filtrar por título
-            schema:
-              type: string
-          - name: location
-            in: query
-            description: Filtrar por ubicación
-            schema:
-              type: string
-          - name: isPublic
-            in: query
-            description: Filtrar por asistencia pública
-            schema:
-              type: string
-        responses:
-          '200':
-            description: Lista de eventos obtenida exitosamente
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/EventOutDto'
-                examples:
-                  example1:
-                    value:
-                      - id: 1
-                        title: "Beneficios del mindfulness"
-                        location: "Zaragoza"
-                        eventDate: "2026-02-01T10:00:00"
-                        entryFee: 22.5
-                        isPublic: false
-                        speakerId: 1
-                  example2:
-                    value:
-                      - id: 2
-                        title: "Guía de autoconocimiento"
-                        location: "Huesca"
-                        eventDate: "2026-06-01T10:00:00"
-                        entryFee: 0
-                        isPublic: true
-                        speakerId: 2
-                      - id: 3
-                        title: "Feria del libro"
-                        location: "Albarracín"
-                        eventDate: "2026-04-23T10:00:00"
-                        entryFee: 0
-                        isPublic: true
-                        speakerId: 3
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-      post:
-        summary: Crear un nuevo evento
-        description: Registra un nuevo evento en el sistema
-        requestBody:
-          required: true
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EventInDto'
-              examples:
-                example1:
-                  value:
-                    title: "Beneficios del mindfulness"
-                    location: "Zaragoza"
-                    eventDate: "2026-02-01T10:00:00"
-                    expectedAttendance: 40
-                    entryFee: 22.5
-                    isPublic: false
-                    speakerId: 1
-                example2:
-                  value:
-                    title: "Feria del libro"
-                    location: "Albarracín"
-                    eventDate: "2026-04-23T10:00:00"
-                    expectedAttendance: 200
-                    entryFee: 0
-                    isPublic: true
-                    speakerId: 3
-        responses:
-          '201':
-            description: Evento creado exitosamente
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/EventOutDto'
-                examples:
-                  example1:
-                    value:
-                      id: 1
-                      title: "Beneficios del mindfulness"
-                      location: "Zaragoza"
-                      eventDate: "2026-02-01T10:00:00"
-                      entryFee: 22.5
-                      isPublic: false
-                      speakerId: 1
-                  example2:
-                    value:
-                      id: 2
-                      title: "Feria del libro"
-                      location: "Albarracín"
-                      eventDate: "2026-04-23T10:00:00"
-                      entryFee: 0
-                      isPublic: true
-                      speakerId: 3
-          '400':
-            description: Bad request
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/BadRequest'
-          '404':
-            description: Speaker not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-  /events/{id}:
-      get:
-        summary: Obtener evento por ID
-        description: Devuelve un evento específico por su ID
-        parameters:
-          - name: id
-            in: path
-            required: true
-            schema:
-              type: integer
-              format: int64
-        responses:
-          '200':
-            description: Evento encontrado
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/EventOutDto'
-                examples:
-                  example1:
-                    value:
-                      id: 1
-                      title: "Beneficios del mindfulness"
-                      location: "Zaragoza"
-                      eventDate: "2026-02-01T10:00:00"
-                      entryFee: 22.5
-                      isPublic: false
-                      speakerId: 1
-                  example2:
-                    value:
-                      id: 2
-                      title: "Feria del libro"
-                      location: "Albarracín"
-                      eventDate: "2026-04-23T10:00:00"
-                      entryFee: 0
-                      isPublic: true
-                      speakerId: 3
-
-          '404':
-            description: Event not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-      put:
-        summary: Modificar evento
-        description: Actualiza un evento existente
-        parameters:
-          - name: id
-            in: path
-            required: true
-            schema:
-              type: integer
-              format: int64
-        requestBody:
-          required: true
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EventInDto'
-              examples:
-                example1:
-                  value:
-                    title: "Beneficios del mindfulness actualizado"
-                    location: "Zaragoza"
-                    eventDate: "2026-02-01T10:00:00"
-                    expectedAttendance: 40
-                    entryFee: 22.5
-                    isPublic: false
-                    speakerId: 1
-                example2:
-                  value:
-                    title: "Feria del libro actualizado"
-                    location: "Albarracín"
-                    eventDate: "2026-04-23T10:00:00"
-                    expectedAttendance: 200
-                    entryFee: 0
-                    isPublic: true
-                    speakerId: 3
-        responses:
-          '200':
-            description: Evento actualizado exitosamente
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/EventOutDto'
-                examples:
-                  example1:
-                    value:
-                      id: 1
-                      title: "Beneficios del mindfulness actualizado"
-                      location: "Zaragoza"
-                      eventDate: "2026-03-01T10:00:00"
-                      entryFee: 25
-                      isPublic: false
-                      speakerId: 1
-                  example2:
-                    value:
-                      id: 2
-                      title: "Feria del libro actualizado"
-                      location: "Albarracín"
-                      eventDate: "2026-04-23T12:00:00"
-                      entryFee: 0
-                      isPublic: true
-                      speakerId: 3
-          '400':
-            description: Bad request
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/BadRequest'
-          '404':
-            description: Event not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-      delete:
-        summary: Eliminar evento
-        description: Elimina un evento del sistema
-        parameters:
-          - name: id
-            in: path
-            required: true
-            schema:
-              type: integer
-              format: int64
-        responses:
-          '204':
-            description: Evento eliminado exitosamente
-            content:
-              application/json:
-                examples:
-                  example1:
-                    value: {}
-                  example2:
-                    value: {}
-          '404':
-            description: Event not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-    # ========================================
-    # SPEAKERS ENDPOINTS
-    # ========================================
+  #
+  # SPEAKERS ENDPOINTS
+  #
   /speakers:
-      get:
-        summary: Obtener todos los ponentes
-        description: Devuelve una lista de ponentes con opciones de filtrado
-        parameters:
-          - name: speciality
-            in: query
-            description: Filtrar por especialidad
-            schema:
-              type: string
-          - name: available
-            in: query
-            description: Filtrar por disponibilidad
-            schema:
-              type: string
-          - name: yearsExperience
-            in: query
-            description: Filtrar por años de experiencia
-            schema:
-              type: string
-        responses:
-          '200':
-            description: Lista de ponentes obtenida exitosamente
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/SpeakerOutDto'
-                examples:
-                  example1:
-                    value:
-                      - id: 1
-                        firstName: "Cristina"
-                        lastName: "Lopez"
-                        email: "cristina@mail.com"
-                        speciality: "mindfulness"
-                        yearsExperience: 5
-                  example2:
-                    value:
-                      - id: 2
-                        firstName: "Monica"
-                        lastName: "Martinez"
-                        email: "monica@mail.com"
-                        speciality: "oratoria"
-                        yearsExperience: 7
-                      - id: 3
-                        firstName: "Angel"
-                        lastName: "Ferrer"
-                        email: "angel@mail.com"
-                        speciality: "inteligencia emocional"
-                        yearsExperience: 4
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
+    get:
+      summary: Devuelve la lista de ponentes
+      description: |
+        Devuelve una lista con todos los ponentes disponibles en el sistema.
 
-      post:
-        summary: Crear un nuevo ponente
-        description: Registra un nuevo ponente en el sistema
-        requestBody:
-          required: true
+        Se permite filtrar ponentes por tres campos al mismo tiempo:
+          - **speciality**: filtra por especialidad.
+          - **available**: filtra por disponibilidad.
+          - **yearsExperience**: filtra por años de experiencia.
+      parameters:
+        - name: speciality
+          in: query
+          description: Filtra por especialidad del ponente
+          required: false
+          schema:
+            type: string
+        - name: available
+          in: query
+          description: Filtra por disponibilidad del ponente
+          required: false
+          schema:
+            type: string
+        - name: yearsExperience
+          in: query
+          description: Filtra por años de experiencia
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK. Lista de ponentes obtenida exitosamente
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SpeakerInDto'
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpeakerOutDto'
               examples:
                 example1:
                   value:
-                    firstName: "Cristina"
-                    lastName: "Lopez"
-                    email: "cristina@mail.com"
-                    speciality: "mindfulness"
+                    - id: 1
+                      firstName: Ana
+                      lastName: Lopez
+                      email: ana@mail.com
+                      speciality: mindfulness
+                      yearsExperience: 5
+                example2:
+                  value:
+                    - id: 2
+                      firstName: Lucia
+                      lastName: Martin
+                      email: lucia@mail.com
+                      speciality: oratoria
+                      yearsExperience: 3
+                    - id: 3
+                      firstName: Pedro
+                      lastName: Sanchez
+                      email: pedro@mail.com
+                      speciality: coaching
+                      yearsExperience: 5
+        '204':
+          description: No existen ponentes que cumplan los filtros indicados
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    post:
+      summary: Registrar un ponente
+      description: Registra un nuevo ponente en el sistema
+      requestBody:
+        description: Datos del nuevo ponente
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeakerInDto'
+            examples:
+              example1:
+                value:
+                  firstName: Ana
+                  lastName: Lopez
+                  email: ana@mail.com
+                  speciality: mindfulness
+                  yearsExperience: 5
+                  workshopHoursTotal: 0
+                  available: true
+                  joinDate: 2025-01-01
+              example2:
+                value:
+                  firstName: Lucia
+                  lastName: Martin
+                  email: lucia@mail.com
+                  speciality: oratoria
+                  yearsExperience: 3
+                  workshopHoursTotal: 0
+                  available: true
+                  joinDate: 2025-02-01
+      responses:
+        '201':
+          description: Ponente registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeakerOutDto'
+              examples:
+                example1:
+                  value:
+                    id: 1
+                    firstName: Ana
+                    lastName: Lopez
+                    email: ana@mail.com
+                    speciality: mindfulness
                     yearsExperience: 5
-                    workshopHoursTotal: 10
-                    available: true
-                    joinDate: "2024-01-01"
                 example2:
-                  value: 
-                    firstName: "Monica"
-                    lastName: "Martinez"
-                    email: "monica@mail.com"
-                    speciality: "oratoria"
-                    yearsExperience: 7
-                    workshopHoursTotal: 25
-                    available: false
-                    joinDate: "2023-09-15"
-        
-        responses:
-          '201':
-            description: Ponente creado exitosamente
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/SpeakerOutDto'
-                examples:
-                  example1:
-                    value: 
-                      id: 1
-                      firstName: "Cristina"
-                      lastName: "Lopez"
-                      email: "cristina@mail.com"
-                      speciality: "mindfulness"
-                      yearsExperience: 5
-                  example2:
-                    value:
-                      id: 2
-                      firstName: "Monica"
-                      lastName: "Martinez"
-                      email: "monica@mail.com"
-                      speciality: "oratoria"
-                      yearsExperience: 7
-          '400':
-            description: Bad request
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/BadRequest'
-          '404':
-            description: Workshop not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
+                  value:
+                    id: 2
+                    firstName: Lucia
+                    lastName: Martin
+                    email: lucia@mail.com
+                    speciality: oratoria
+                    yearsExperience: 3
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: Workshop not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /speakers/{id}:
-      get:
-        summary: Obtener ponente por ID
-        description: Devuelve un ponente específico por su ID
-        parameters:
-          - name: id
-            in: path
-            required: true
-            schema:
-              type: integer
-              format: int64
-        responses:
-          '200':
-            description: Ponente encontrado
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/SpeakerOutDto'
-                examples:
-                  example1:
-                    value: 
-                      id: 1
-                      firstName: "Cristina"
-                      lastName: "Lopez"
-                      email: "cristina@mail.com"
-                      speciality: "mindfulness"
-                      yearsExperience: 5
-                  example2:
-                    value: 
-                      id: 2
-                      firstName: "Monica"
-                      lastName: "Martinez"
-                      email: "monica@mail.com"
-                      speciality: "oratoria"
-                      yearsExperience: 7
-          '404':
-            description: Speaker not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-      put:
-        summary: Modificar ponente
-        description: Actualiza un ponente existente
-        parameters:
-          - name: id
-            in: path
-            required: true
-            schema:
-              type: integer
-              format: int64
-        requestBody:
+    get:
+      summary: Obtener ponente por ID
+      description: Devuelve un ponente específico por su ID
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del ponente
           required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Ponente encontrado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SpeakerInDto'
+                $ref: '#/components/schemas/SpeakerOutDto'
               examples:
                 example1:
                   value:
-                    firstName: "Cristina"
-                    lastName: "Lopez"
-                    email: "cristina@mail.com"
-                    speciality: "mindfulness avanzado"
+                    id: 1
+                    firstName: Ana
+                    lastName: Lopez
+                    email: ana@mail.com
+                    speciality: mindfulness
+                    yearsExperience: 5
+                example2:
+                  value:
+                    id: 2
+                    firstName: Lucia
+                    lastName: Martin
+                    email: lucia@mail.com
+                    speciality: oratoria
+                    yearsExperience: 3
+        '404':
+          description: Speaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              example:
+                code: 404
+                title: not-found
+                message: The speaker does not exist
+                errors: {}
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    put:
+      summary: Modificar ponente
+      description: Actualiza un ponente existente
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del ponente
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Datos actualizados del ponente
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeakerInDto'
+            examples:
+              example1:
+                value:
+                  firstName: Ana
+                  lastName: Lopez Updated
+                  email: ana.updated@mail.com
+                  speciality: mindfulness
+                  yearsExperience: 6
+                  workshopHoursTotal: 10
+                  available: true
+                  joinDate: 2025-01-01
+              example2:
+                value:
+                  firstName: Lucia
+                  lastName: Martin Updated
+                  email: lucia.updated@mail.com
+                  speciality: oratoria
+                  yearsExperience: 4
+                  workshopHoursTotal: 20
+                  available: false
+                  joinDate: 2025-02-01
+      responses:
+        '200':
+          description: Ponente modificado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeakerOutDto'
+              examples:
+                example1:
+                  value:
+                    id: 1
+                    firstName: Ana
+                    lastName: Lopez Updated
+                    email: ana.updated@mail.com
+                    speciality: mindfulness
                     yearsExperience: 6
-                    workshopHoursTotal: 15
-                    available: true
-                    joinDate: "2025-01-01"
                 example2:
-                   value:
-                     firstName: "Monica"
-                     lastName: "Martinez"
-                     email: "monica@mail.com"
-                     speciality: "oratoria profesional"
-                     yearsExperience: 12
-                     workshopHoursTotal: 30
-                     available: false
-                     joinDate: "2024-09-15"
-        responses:
-          '200':
-            description: Ponente actualizado exitosamente
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/SpeakerOutDto'
-                examples:
-                  example1:
-                    value:
-                      id: 1
-                      firstName: "Cristina"
-                      lastName: "Lopez"
-                      email: "cristina@mail.com"
-                      speciality: "mindfulness avanzado"
-                      yearsExperience: 6
-                  example2:
-                    value:
-                      id: 2
-                      firstName: "Monica"
-                      lastName: "Martinez"
-                      email: "monica@mail.com"
-                      speciality: "oratoria profesional"
-                      yearsExperience: 12
-
-          '400':
-            description: Bad request
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/BadRequest'
-          '404':
-            description: Speaker not found / Workshop not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-      delete:
-        summary: Eliminar ponente
-        description: Elimina un ponente del sistema
-        parameters:
-          - name: id
-            in: path
-            required: true
-            schema:
-              type: integer
-              format: int64
-        responses:
-          '204':
-            description: Ponente eliminado exitosamente
-            content:
-              application/json:
-                schema:
-                  type: object
-                examples:
-                  example1:
-                    value: { }
-                  example2:
-                    value: { }
-
-          '404':
-            description: Speaker not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-    # ========================================
-    # WORKSHOPS ENDPOINTS
-    # ========================================
-  /workshops:
-      get:
-        summary: Obtener todos los talleres
-        description: Devuelve una lista de talleres con opciones de filtrado
-        parameters:
-          - name: name
-            in: query
-            description: Filtrar por nombre (contiene)
-            schema:
-              type: string
-          - name: isOnline
-            in: query
-            description: Filtrar por modalidad online
-            schema:
-              type: string
-          - name: speakerId
-            in: query
-            description: Filtrar por ID del ponente
-            schema:
-              type: string
-        responses:
-          '200':
-            description: Lista de talleres obtenida exitosamente
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/WorkshopOutDto'
-                examples:
-                  example1:
-                    value:
-                      - id: 1
-                        name: "Oratoria básica"
-                        description: "Taller de oratoria y comunicación"
-                        startDate: "2026-02-10"
-                        durationMinutes: 90
-                        price: 20
-                        isOnline: true
-                        speakerId: 1
-                  example2:
-                    value:
-                      - id: 2
-                        name: "Comunicación emocional"
-                        description: "Expresión emocional a través de los relatos"
-                        startDate: "2026-03-15"
-                        durationMinutes: 120
-                        price: 0
-                        isOnline: false
-                        speakerId: 2
-                      - id: 3
-                        name: "Mindfulness práctico"
-                        description: "Práctica guiada de mindfulness"
-                        startDate: "2026-04-01"
-                        durationMinutes: 60
-                        price: 50
-                        isOnline: false
-                        speakerId: 1
-          '404':
-            description: Speaker not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-      post:
-        summary: Crear un nuevo taller
-        description: Registra un nuevo taller en el sistema
-        requestBody:
-          required: true
+                  value:
+                    id: 2
+                    firstName: Lucia
+                    lastName: Martin Updated
+                    email: lucia.updated@mail.com
+                    speciality: oratoria
+                    yearsExperience: 4
+        '400':
+          description: Bad request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkshopInDto'
-              examples:
-                example1:
-                  value:
-                    name: "Oratoria básica"
-                    description: "Taller de oratoria y comunicación"
-                    startDate: "2026-02-10"
-                    durationMinutes: 90
-                    price: 20
-                    maxCapacity: 25
-                    isOnline: true
-                    speakerId: 1
-                example2:
-                  value:
-                    name: "Mindfulness práctico"
-                    description: "Práctica guiada de mindfulness"
-                    startDate: "2026-04-01"
-                    durationMinutes: 60
-                    price: 50
-                    maxCapacity: 9
-                    isOnline: false
-                    speakerId: 1
-
-        responses:
-          '201':
-            description: Taller creado exitosamente
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/WorkshopOutDto'
-                examples:
-                  example1:
-                    value:
-                      id: 1
-                      name: "Oratoria básica"
-                      description: "Taller de oratoria y comunicación"
-                      startDate: "2026-02-10"
-                      durationMinutes: 90
-                      price: 20
-                      isOnline: true
-                      speakerId: 1
-                  example2:
-                    value:
-                      id: 2
-                      name: "Mindfulness práctico"
-                      description: "Práctica guiada de mindfulness"
-                      startDate: "2026-04-01"
-                      durationMinutes: 60
-                      price: 50
-                      isOnline: false
-                      speakerId: 1
-
-          '400':
-            description: Bad request
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/BadRequest'
-          '404':
-            description: Speaker not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-  /workshops/{id}:
-      get:
-        summary: Obtener taller por ID
-        description: Devuelve un taller específico por su ID
-        parameters:
-          - name: id
-            in: path
-            required: true
-            schema:
-              type: integer
-              format: int64
-        responses:
-          '200':
-            description: Taller encontrado
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/WorkshopOutDto'
-                examples:
-                  example1:
-                    value:
-                      id: 1
-                      name: "Oratoria básica"
-                      description: "Taller de oratoria y comunicación"
-                      startDate: "2026-02-10"
-                      durationMinutes: 90
-                      price: 20
-                      isOnline: true
-                      speakerId: 1
-                  example2:
-                    value:
-                      id: 2
-                      name: "Mindfulness práctico"
-                      description: "Práctica guiada de mindfulness"
-                      startDate: "2026-04-01"
-                      durationMinutes: 60
-                      price: 50
-                      isOnline: false
-                      speakerId: 1
-          '404':
-            description: Workshop not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-      put:
-        summary: Modificar taller
-        description: Actualiza un taller existente
-        parameters:
-          - name: id
-            in: path
-            required: true
-            schema:
-              type: integer
-              format: int64
-        requestBody:
-          required: true
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: Speaker or workshop not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkshopInDto'
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    delete:
+      summary: Eliminar ponente
+      description: Elimina un ponente existente
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del ponente
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Ponente eliminado correctamente
+        '404':
+          description: Speaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+
+  #
+  # EVENTS ENDPOINTS
+  #
+  /events:
+    get:
+      summary: Devuelve la lista de eventos
+      description: |
+        Devuelve una lista con todos los eventos disponibles.
+
+        Se permite filtrar eventos por tres campos al mismo tiempo:
+          - **title**: filtra por título.
+          - **location**: filtra por ubicación.
+          - **isPublic**: filtra por visibilidad pública.
+      parameters:
+        - name: title
+          in: query
+          description: Filtra por título del evento
+          required: false
+          schema:
+            type: string
+        - name: location
+          in: query
+          description: Filtra por ubicación del evento
+          required: false
+          schema:
+            type: string
+        - name: isPublic
+          in: query
+          description: Filtra por eventos públicos o privados
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK. Lista de eventos obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventOutDto'
               examples:
                 example1:
                   value:
-                    name: "Oratoria básica actualizada"
-                    description: "Taller de oratoria y comunicación actualizada"
-                    startDate: "2026-02-18"
-                    durationMinutes: 120
-                    price: 25
-                    maxCapacity: 25
-                    isOnline: true
+                    - id: 1
+                      title: Mindfulness
+                      location: Zaragoza
+                      eventDate: 2026-02-01T10:00:00
+                      entryFee: 0
+                      public: true
+                      speakerId: 1
+                example2:
+                  value:
+                    - id: 2
+                      title: Arte terapia
+                      location: Madrid
+                      eventDate: 2026-03-01T18:00:00
+                      entryFee: 10
+                      public: true
+                      speakerId: 1
+                    - id: 3
+                      title: Yoga
+                      location: Zaragoza
+                      eventDate: 2026-02-20T18:00:00
+                      entryFee: 5
+                      public: true
+                      speakerId: 2
+        '204':
+          description: No existen eventos que cumplan los filtros indicados
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    post:
+      summary: Registrar un evento
+      description: Registra un nuevo evento asociado a un ponente
+      requestBody:
+        description: Datos del nuevo evento
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventInDto'
+            examples:
+              example1:
+                value:
+                  title: Mindfulness
+                  location: Zaragoza
+                  eventDate: 2026-02-01T10:00:00
+                  entryFee: 0
+                  public: true
+                  expectedAttendance: 30
+                  speakerId: 1
+              example2:
+                value:
+                  title: Arte terapia
+                  location: Madrid
+                  eventDate: 2026-03-01T18:00:00
+                  entryFee: 10
+                  public: true
+                  expectedAttendance: 50
+                  speakerId: 1
+      responses:
+        '201':
+          description: Evento registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventOutDto'
+              examples:
+                example1:
+                  value:
+                    id: 1
+                    title: Mindfulness
+                    location: Zaragoza
+                    eventDate: 2026-02-01T10:00:00
+                    entryFee: 0
+                    public: true
                     speakerId: 1
                 example2:
                   value:
-                    name: "Mindfulness práctico actualizado"
-                    description: "Práctica guiada de mindfulness actualizada. Sesiones avanzadas"
-                    startDate: "2026-05-10"
-                    durationMinutes: 90
-                    price: 55
-                    maxCapacity: 10
-                    isOnline: false
-                    speakerId: 2
-
-        responses:
-          '200':
-            description: Taller actualizado exitosamente
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/WorkshopOutDto'
-                examples:
-                  example1:
-                    value:
-                      id: 1
-                      name: "Oratoria básica actualizada"
-                      description: "Taller de oratoria y comunicación actualizada"
-                      startDate: "2026-02-18"
-                      durationMinutes: 120
-                      price: 25
-                      isOnline: true
-                      speakerId: 1
-                  example2:
-                     value:
-                       name: "Mindfulness práctico actualizado"
-                       description: "Práctica guiada de mindfulness actualizada. Sesiones avanzadas"
-                       startDate: "2026-05-10"
-                       durationMinutes: 90
-                       price: 55
-                       isOnline: false
-                       speakerId: 2
-          '400':
-            description: Bad request
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/BadRequest'
-          '404':
-            description: Workshop not found / Speaker not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-      delete:
-        summary: Eliminar taller
-        description: Elimina un taller del sistema
-        parameters:
-          - name: id
-            in: path
-            required: true
+                    id: 2
+                    title: Arte terapia
+                    location: Madrid
+                    eventDate: 2026-03-01T18:00:00
+                    entryFee: 10
+                    public: true
+                    speakerId: 1
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: Speaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /events/{id}:
+    get:
+      summary: Obtener evento por ID
+      description: Devuelve un evento específico por su ID
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del evento
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Evento encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventOutDto'
+              examples:
+                example1:
+                  value:
+                    id: 1
+                    title: Mindfulness
+                    location: Zaragoza
+                    eventDate: 2026-02-01T10:00:00
+                    entryFee: 0
+                    public: true
+                    speakerId: 1
+                example2:
+                  value:
+                    id: 2
+                    title: Arte terapia
+                    location: Madrid
+                    eventDate: 2026-03-01T18:00:00
+                    entryFee: 10
+                    public: true
+                    speakerId: 1
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              example:
+                code: 404
+                title: not-found
+                message: The event does not exist
+                errors: {}
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    put:
+      summary: Modificar evento
+      description: Actualiza un evento existente
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del evento
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Datos actualizados del evento
+        content:
+          application/json:
             schema:
-              type: integer
-              format: int64
-        responses:
-          '204':
-            description: Taller eliminado exitosamente
-            content:
-              application/json:
-                schema:
-                  type: object
-                examples:
-                  example1:
-                    value: {}
-                  example2:
-                    value: {}
-          '404':
-            description: Workshop not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
+              $ref: '#/components/schemas/EventInDto'
+            examples:
+              example1:
+                value:
+                  title: Mindfulness actualizado
+                  location: Zaragoza
+                  eventDate: 2026-02-10T10:00:00
+                  entryFee: 5
+                  public: true
+                  expectedAttendance: 40
+                  speakerId: 1
+              example2:
+                value:
+                  title: Arte terapia actualizado
+                  location: Madrid
+                  eventDate: 2026-03-10T18:00:00
+                  entryFee: 15
+                  public: false
+                  expectedAttendance: 45
+                  speakerId: 1
+      responses:
+        '200':
+          description: Evento modificado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventOutDto'
+              examples:
+                example1:
+                  value:
+                    id: 1
+                    title: Mindfulness actualizado
+                    location: Zaragoza
+                    eventDate: 2026-02-10T10:00:00
+                    entryFee: 5
+                    public: true
+                    speakerId: 1
+                example2:
+                  value:
+                    id: 2
+                    title: Arte terapia actualizado
+                    location: Madrid
+                    eventDate: 2026-03-10T18:00:00
+                    entryFee: 15
+                    public: false
+                    speakerId: 1
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: Event or speaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    delete:
+      summary: Eliminar evento
+      description: Elimina un evento existente
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del evento
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Evento eliminado correctamente
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
 
-    # ========================================
-    # REGISTRATIONS ENDPOINTS
-    # ========================================
+  #
+  # REGISTRATIONS ENDPOINTS
+  #
   /registrations:
-      get:
-        summary: Obtener todos los registros
-        description: Devuelve una lista de registros con opciones de filtrado
-        parameters:
-          - name: userId
-            in: query
-            description: Filtrar por ID del usuario
-            schema:
-              type: string
-          - name: workshopId
-            in: query
-            description: Filtrar por ID del taller
-            schema:
-              type: string
-          - name: isPaid
-            in: query
-            description: Filtrar por estado de pago
-            schema:
-              type: string
-        responses:
-          '200':
-            description: Lista de registros obtenida exitosamente
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/RegistrationOutDto'
-                examples:
-                  example1:
-                    value:
-                      - id: 1
-                        registrationDate: "2026-01-10"
-                        isPaid: false
-                        numberOfTickets: 2
-                        amountPaid: 0
-                        rating: 5
-                        userId: 1
-                        workshopId: 10
-                  example2:
-                    value:
-                      - id: 2
-                        registrationDate: "2026-02-15"
-                        isPaid: true
-                        numberOfTickets: 1
-                        amountPaid: 20
-                        rating: 4
-                        userId: 3
-                        workshopId: 5
-          '404':
-            description: User not found/ Workshop not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
+    get:
+      summary: Devuelve la lista de inscripciones
+      description: |
+        Devuelve una lista con todas las inscripciones registradas.
 
-      post:
-        summary: Crear un nuevo registro
-        description: Registra un nuevo registro en el sistema
-        requestBody:
-          required: true
+        Se permite filtrar inscripciones por tres campos al mismo tiempo:
+          - **userId**: filtra por identificador de usuario.
+          - **workshopId**: filtra por identificador de taller.
+          - **isPaid**: filtra por estado de pago.
+      parameters:
+        - name: userId
+          in: query
+          description: Filtra por identificador de usuario
+          required: false
+          schema:
+            type: string
+        - name: workshopId
+          in: query
+          description: Filtra por identificador de taller
+          required: false
+          schema:
+            type: string
+        - name: isPaid
+          in: query
+          description: Filtra por estado de pago
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK. Lista de inscripciones obtenida exitosamente
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RegistrationInDto'
+                type: array
+                items:
+                  $ref: '#/components/schemas/RegistrationOutDto'
               examples:
                 example1:
                   value:
-                    numberOfTickets: 2
-                    userId: 1
-                    workshopId: 10
-                example2:
-                  value:
-                    numberOfTickets: 1
-                    userId: 3
-                    workshopId: 5
-        responses:
-          '201':
-            description: Registro creado exitosamente
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/RegistrationOutDto'
-                examples:
-                  example1:
-                    value:
-                      numberOfTickets: 2
-                      userId: 1
-                      workshopId: 10
-                  example2:
-                    value:
-                      numberOfTickets: 1
-                      userId: 3
-                      workshopId: 5
-          '400':
-            description: Bad request
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/BadRequest'
-          '404':
-            description: User or Workshop not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-  /registrations/{id}:
-      get:
-        summary: Obtener registro por ID
-        description: Devuelve un registro específico por su ID
-        parameters:
-          - name: id
-            in: path
-            required: true
-            schema:
-              type: integer
-              format: int64
-        responses:
-          '200':
-            description: Registro encontrado
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/RegistrationOutDto'
-                examples:
-                  example1:
-                    value:
-                      id: 1
-                      registrationDate: "2026-01-10"
-                      isPaid: false
+                    - id: 1
+                      registrationDate: 2026-01-10
+                      confirmationCode: CONF-1
+                      paid: false
                       numberOfTickets: 2
                       amountPaid: 0
-                      rating: 5
+                      rating: null
                       userId: 1
                       workshopId: 10
-                  example2:
-                    value:
-                      id: 2
-                      registrationDate: "2026-02-15"
-                      isPaid: true
+                example2:
+                  value:
+                    - id: 2
+                      registrationDate: 2026-01-11
+                      confirmationCode: CONF-2
+                      paid: true
                       numberOfTickets: 1
                       amountPaid: 20
-                      rating: 4
-                      userId: 3
-                      workshopId: 5
-          '404':
-            description: Registration not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-      put:
-        summary: Modificar registro
-        description: Actualiza un registro existente
-        parameters:
-          - name: id
-            in: path
-            required: true
-            schema:
-              type: integer
-              format: int64
-        requestBody:
-          required: true
+                      rating: 5
+                      userId: 2
+                      workshopId: 10
+        '204':
+          description: No existen inscripciones que cumplan los filtros indicados
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RegistrationInDto'
+                $ref: '#/components/schemas/InternalServerError'
+    post:
+      summary: Registrar una inscripción
+      description: Registra una nueva inscripción de un usuario en un taller
+      requestBody:
+        description: Datos de la nueva inscripción
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationInDto'
+            examples:
+              example1:
+                value:
+                  numberOfTickets: 2
+                  userId: 1
+                  workshopId: 10
+              example2:
+                value:
+                  numberOfTickets: 1
+                  userId: 2
+                  workshopId: 10
+      responses:
+        '201':
+          description: Inscripción registrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationOutDto'
               examples:
                 example1:
                   value:
-                    numberOfTickets: 3
+                    id: 1
+                    registrationDate: 2026-01-10
+                    confirmationCode: CONF-1
+                    paid: false
+                    numberOfTickets: 2
+                    amountPaid: 0
+                    rating: null
                     userId: 1
                     workshopId: 10
                 example2:
                   value:
+                    id: 2
+                    registrationDate: 2026-01-11
+                    confirmationCode: CONF-2
+                    paid: false
                     numberOfTickets: 1
-                    userId: 3
-                    workshopId: 5
-        responses:
-          '200':
-            description: Registro actualizado exitosamente
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/RegistrationOutDto'
-                examples:
-                  example1:
-                    value:
-                      id: 1
-                      registrationDate: "2026-01-10"
-                      isPaid: true
-                      numberOfTickets: 3
-                      amountPaid: 30
-                      rating: 5
-                      userId: 1
-                      workshopId: 10
-                  example2:
-                    value:
-                      id: 2
-                      registrationDate: "2026-02-15"
-                      isPaid: true
-                      numberOfTickets: 1
-                      amountPaid: 20
-                      rating: 4
-                      userId: 3
-                      workshopId: 5
-          '400':
-            description: Bad request
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/BadRequest'
-          '404':
-            description: Registration not found / User not found / Workshop not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
-
-      delete:
-        summary: Eliminar registro
-        description: Elimina un registro del sistema
-        parameters:
-          - name: id
-            in: path
-            required: true
+                    amountPaid: 0
+                    rating: null
+                    userId: 2
+                    workshopId: 10
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: User or workshop not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /registrations/{id}:
+    get:
+      summary: Obtener inscripción por ID
+      description: Devuelve una inscripción específica por su ID
+      parameters:
+        - name: id
+          in: path
+          description: Identificador de la inscripción
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Inscripción encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationOutDto'
+              examples:
+                example1:
+                  value:
+                    id: 1
+                    registrationDate: 2026-01-10
+                    confirmationCode: CONF-1
+                    paid: false
+                    numberOfTickets: 2
+                    amountPaid: 0
+                    rating: null
+                    userId: 1
+                    workshopId: 10
+                example2:
+                  value:
+                    id: 2
+                    registrationDate: 2026-01-11
+                    confirmationCode: CONF-2
+                    paid: true
+                    numberOfTickets: 1
+                    amountPaid: 20
+                    rating: 5
+                    userId: 2
+                    workshopId: 10
+        '404':
+          description: Registration not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              example:
+                code: 404
+                title: not-found
+                message: The registration does not exist
+                errors: {}
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    put:
+      summary: Modificar inscripción
+      description: Actualiza una inscripción existente
+      parameters:
+        - name: id
+          in: path
+          description: Identificador de la inscripción
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Datos actualizados de la inscripción
+        content:
+          application/json:
             schema:
-              type: integer
-              format: int64
-        responses:
-          '204':
-            description: Registro eliminado exitosamente
-            content:
-              application/json:
-                schema:
-                  type: object
-                examples:
-                  example1:
-                    value: {}
-                  example2:
-                    value: {}
-          '404':
-            description: Registration not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFound'
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InternalServerError'
+              $ref: '#/components/schemas/RegistrationInDto'
+            examples:
+              example1:
+                value:
+                  numberOfTickets: 3
+                  userId: 1
+                  workshopId: 10
+              example2:
+                value:
+                  numberOfTickets: 1
+                  userId: 2
+                  workshopId: 10
+      responses:
+        '200':
+          description: Inscripción modificada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationOutDto'
+              examples:
+                example1:
+                  value:
+                    id: 1
+                    registrationDate: 2026-01-10
+                    confirmationCode: CONF-1
+                    paid: false
+                    numberOfTickets: 3
+                    amountPaid: 0
+                    rating: null
+                    userId: 1
+                    workshopId: 10
+                example2:
+                  value:
+                    id: 2
+                    registrationDate: 2026-01-11
+                    confirmationCode: CONF-2
+                    paid: true
+                    numberOfTickets: 1
+                    amountPaid: 20
+                    rating: 5
+                    userId: 2
+                    workshopId: 10
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: Registration, user or workshop not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    delete:
+      summary: Eliminar inscripción
+      description: Elimina una inscripción existente
+      parameters:
+        - name: id
+          in: path
+          description: Identificador de la inscripción
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Inscripción eliminada correctamente
+        '404':
+          description: Registration not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
 
+  #
+  # WORKSHOPS ENDPOINTS
+  #
+  /workshops:
+    get:
+      summary: Devuelve la lista de talleres
+      description: |
+        Endpoint original del proyecto.
+
+        Devuelve una lista con todos los talleres y mantiene la salida original de la API.
+        En esta respuesta el ponente se representa mediante **speakerId**.
+      parameters:
+        - name: name
+          in: query
+          description: Filtra por nombre del taller
+          required: false
+          schema:
+            type: string
+        - name: isOnline
+          in: query
+          description: Filtra por talleres online o presenciales
+          required: false
+          schema:
+            type: string
+        - name: speakerId
+          in: query
+          description: Filtra por identificador de ponente
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK. Lista de talleres obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkshopOutDto'
+              examples:
+                example1:
+                  value:
+                    - id: 1
+                      name: Taller de creatividad emocional
+                      description: Taller práctico para trabajar la expresión emocional.
+                      startDate: 2026-06-15
+                      durationMinutes: 90
+                      price: 25
+                      online: false
+                      speakerId: 1
+                example2:
+                  value:
+                    - id: 2
+                      name: Taller online de comunicación
+                      description: Taller online para trabajar comunicación emocional.
+                      startDate: 2026-07-15
+                      durationMinutes: 120
+                      price: 30
+                      online: true
+                      speakerId: 1
+        '204':
+          description: No existen talleres que cumplan los filtros indicados
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    post:
+      summary: Registrar un taller
+      description: Registra un nuevo taller manteniendo el comportamiento original
+      requestBody:
+        description: Datos del nuevo taller
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkshopInDto'
+            examples:
+              example1:
+                value:
+                  name: Taller de creatividad emocional
+                  description: Taller práctico para trabajar la expresión emocional.
+                  startDate: 2026-06-15
+                  durationMinutes: 90
+                  price: 25
+                  maxCapacity: 12
+                  online: false
+                  speakerId: 1
+              example2:
+                value:
+                  name: Taller online de comunicación
+                  description: Taller online para trabajar comunicación emocional.
+                  startDate: 2026-07-15
+                  durationMinutes: 120
+                  price: 30
+                  maxCapacity: 20
+                  online: true
+                  speakerId: 1
+      responses:
+        '201':
+          description: Taller registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkshopOutDto'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: Speaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /workshops/{id}:
+    get:
+      summary: Obtener taller por ID
+      description: Devuelve un taller específico por su ID en el endpoint original
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del taller
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Taller encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkshopOutDto'
+        '404':
+          description: Workshop not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    put:
+      summary: Modificar taller
+      description: Actualiza un taller existente manteniendo el comportamiento original
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del taller
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Datos actualizados del taller
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkshopInDto'
+      responses:
+        '200':
+          description: Taller modificado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkshopOutDto'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: Workshop or speaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    delete:
+      summary: Eliminar taller
+      description: Elimina un taller existente manteniendo el comportamiento original
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del taller
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Taller eliminado correctamente
+        '404':
+          description: Workshop not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+
+  #
+  # WORKSHOPS V1 ENDPOINTS
+  #
+  /api/v1/workshops:
+    get:
+      summary: Devuelve la lista de talleres en la versión 1
+      description: |
+        Versión 1 explícita de la operación GET de talleres.
+
+        Mantiene la respuesta original de la API: el ponente se representa mediante **speakerId**.
+        Se incluye como endpoint versionado para diferenciar claramente la respuesta original de la versión 2.
+      parameters:
+        - name: name
+          in: query
+          description: Filtra por nombre del taller
+          required: false
+          schema:
+            type: string
+        - name: isOnline
+          in: query
+          description: Filtra por talleres online o presenciales
+          required: false
+          schema:
+            type: string
+        - name: speakerId
+          in: query
+          description: Filtra por identificador de ponente
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK. Lista de talleres obtenida exitosamente en versión 1
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkshopOutDto'
+              examples:
+                example1:
+                  value:
+                    - id: 1
+                      name: Taller de creatividad emocional
+                      description: Taller práctico para trabajar la expresión emocional.
+                      startDate: 2026-06-15
+                      durationMinutes: 90
+                      price: 25
+                      online: false
+                      speakerId: 1
+                example2:
+                  value:
+                    - id: 2
+                      name: Taller online de comunicación
+                      description: Taller online para trabajar comunicación emocional.
+                      startDate: 2026-07-15
+                      durationMinutes: 120
+                      price: 30
+                      online: true
+                      speakerId: 1
+        '204':
+          description: No existen talleres que cumplan los filtros indicados
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    post:
+      summary: Registrar un taller en la versión 1
+      description: Registra un nuevo taller manteniendo el comportamiento original de la versión 1
+      requestBody:
+        description: Datos del nuevo taller
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkshopInDto'
+            examples:
+              example1:
+                value:
+                  name: Taller de creatividad emocional
+                  description: Taller práctico para trabajar la expresión emocional.
+                  startDate: 2026-06-15
+                  durationMinutes: 90
+                  price: 25
+                  maxCapacity: 12
+                  online: false
+                  speakerId: 1
+              example2:
+                value:
+                  name: Taller online de comunicación
+                  description: Taller online para trabajar comunicación emocional.
+                  startDate: 2026-07-15
+                  durationMinutes: 120
+                  price: 30
+                  maxCapacity: 20
+                  online: true
+                  speakerId: 1
+      responses:
+        '201':
+          description: Taller registrado en versión 1
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkshopOutDto'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: Speaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /api/v1/workshops/{id}:
+    put:
+      summary: Modificar taller en la versión 1
+      description: Actualiza un taller existente manteniendo el comportamiento original de la versión 1
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del taller
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Datos actualizados del taller
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkshopInDto'
+            examples:
+              example1:
+                value:
+                  name: Taller de creatividad emocional actualizado
+                  description: Taller actualizado.
+                  startDate: 2026-06-20
+                  durationMinutes: 120
+                  price: 30
+                  maxCapacity: 15
+                  online: false
+                  speakerId: 1
+              example2:
+                value:
+                  name: Taller online actualizado
+                  description: Taller online actualizado.
+                  startDate: 2026-07-20
+                  durationMinutes: 150
+                  price: 35
+                  maxCapacity: 25
+                  online: true
+                  speakerId: 1
+      responses:
+        '200':
+          description: Taller modificado exitosamente en versión 1
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkshopOutDto'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: Workshop or speaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    delete:
+      summary: Eliminar taller en la versión 1
+      description: Elimina un taller existente manteniendo el comportamiento original de la versión 1
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del taller
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Taller eliminado correctamente en versión 1
+        '404':
+          description: Workshop not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+
+  #
+  # WORKSHOPS V2 ENDPOINTS
+  #
+  /api/v2/workshops:
+    get:
+      summary: Devuelve la lista de talleres en la versión 2
+      description: |
+        Versión 2 de la operación GET de talleres.
+
+        Esta versión modifica la salida respecto a la versión 1:
+          - Incluye **maxCapacity** como dato útil para el cliente.
+          - Sustituye **speakerId** por **speakerName** para mostrar el nombre del ponente.
+
+        Ejemplo de diferencia:
+          - La versión 1 devuelve speakerId.
+          - La versión 2 devuelve speakerName.
+      parameters:
+        - name: name
+          in: query
+          description: Filtra por nombre del taller
+          required: false
+          schema:
+            type: string
+        - name: isOnline
+          in: query
+          description: Filtra por talleres online o presenciales
+          required: false
+          schema:
+            type: string
+        - name: speakerId
+          in: query
+          description: Filtra por identificador de ponente
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK. Lista de talleres obtenida exitosamente en versión 2
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkshopOutDtoV2'
+              examples:
+                example1:
+                  value:
+                    - id: 1
+                      name: Taller de creatividad emocional
+                      description: Taller práctico para trabajar la expresión emocional.
+                      startDate: 2026-06-15
+                      durationMinutes: 90
+                      price: 25
+                      online: false
+                      maxCapacity: 12
+                      speakerName: Ana Lopez
+                example2:
+                  value:
+                    - id: 2
+                      name: Taller online de comunicación
+                      description: Taller online para trabajar comunicación emocional.
+                      startDate: 2026-07-15
+                      durationMinutes: 120
+                      price: 30
+                      online: true
+                      maxCapacity: 20
+                      speakerName: Lucia Martin
+        '204':
+          description: No existen talleres que cumplan los filtros indicados
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    post:
+      summary: Registrar un taller en la versión 2
+      description: |
+        Registra un nuevo taller en la versión 2.
+
+        Esta versión añade control de duplicados. Si ya existe un taller con los mismos datos principales,
+        la API devuelve 409 Conflict.
+      requestBody:
+        description: Datos del nuevo taller
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkshopInDto'
+            examples:
+              example1:
+                value:
+                  name: Taller de creatividad emocional
+                  description: Taller práctico para trabajar la expresión emocional.
+                  startDate: 2026-06-15
+                  durationMinutes: 90
+                  price: 25
+                  maxCapacity: 12
+                  online: false
+                  speakerId: 1
+              example2:
+                value:
+                  name: Taller online de comunicación
+                  description: Taller online para trabajar comunicación emocional.
+                  startDate: 2026-07-15
+                  durationMinutes: 120
+                  price: 30
+                  maxCapacity: 20
+                  online: true
+                  speakerId: 1
+      responses:
+        '201':
+          description: Taller registrado en versión 2
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkshopOutDto'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: Speaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '409':
+          description: Conflict. Ya existe un taller con los mismos datos principales
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictWorkshopDuplicado'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /api/v2/workshops/{id}:
+    put:
+      summary: Modificar taller en la versión 2
+      description: |
+        Actualiza un taller existente en la versión 2.
+
+        Esta versión añade control de duplicados también durante la edición. Si al modificar un taller sus datos coinciden con los de otro taller existente,
+        la API devuelve 409 Conflict.
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del taller
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Datos actualizados del taller
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkshopInDto'
+            examples:
+              example1:
+                value:
+                  name: Taller de creatividad emocional actualizado
+                  description: Taller actualizado.
+                  startDate: 2026-06-20
+                  durationMinutes: 120
+                  price: 30
+                  maxCapacity: 15
+                  online: false
+                  speakerId: 1
+              example2:
+                value:
+                  name: Taller de creatividad emocional
+                  description: Taller práctico para trabajar la expresión emocional.
+                  startDate: 2026-06-15
+                  durationMinutes: 90
+                  price: 25
+                  maxCapacity: 12
+                  online: false
+                  speakerId: 1
+      responses:
+        '200':
+          description: Taller modificado exitosamente en versión 2
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkshopOutDto'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: Workshop or speaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '409':
+          description: Conflict. La modificación genera un taller duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictWorkshopDuplicado'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    delete:
+      summary: Eliminar taller en la versión 2
+      description: |
+        Elimina un taller existente en la versión 2.
+
+        Esta versión añade control de integridad funcional. Si el taller tiene inscripciones asociadas,
+        no se elimina y la API devuelve 409 Conflict.
+      parameters:
+        - name: id
+          in: path
+          description: Identificador del taller
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Taller eliminado correctamente en versión 2
+        '404':
+          description: Workshop not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '409':
+          description: Conflict. El taller tiene inscripciones asociadas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictWorkshopInscripciones'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
 components:
   schemas:
-    # USER DTOs
     UserInDto:
       type: object
       properties:
         username:
           type: string
-          minLength: 1
-          example: "patricia"
+          description: Nombre de usuario
         password:
           type: string
-          minLength: 1
-          example: "password123"
+          description: Contraseña del usuario
         email:
           type: string
-          format: email
-          example: "patricia@mail.com"
+          description: Correo electrónico del usuario
         fullName:
           type: string
-          example: "Patricia User"
+          description: Nombre completo del usuario
         age:
           type: integer
-          minimum: 18
-          example: 25
+          format: int32
+          description: Edad del usuario
       example:
-        username: "patricia"
-        password: "password123"
-        email: "patricia@mail.com"
-        fullName: "Patricia User"
+        username: Patricia
+        password: patricia123
+        email: patricia@mail.com
+        fullName: Patricia User
         age: 25
-
-
     UserOutDto:
       type: object
       properties:
         id:
           type: integer
           format: int64
-          example: 1
+          description: Identificador único del usuario
         username:
           type: string
-          example: "patricia"
+          description: Nombre de usuario
         email:
           type: string
-          example: "patricia@mail.com"
+          description: Correo electrónico del usuario
         fullName:
           type: string
-          example: "Patricia User"
+          description: Nombre completo del usuario
         role:
           type: string
-          example: "user"
+          description: Rol del usuario
       example:
         id: 1
-        username: "patricia"
-        email: "patricia@mail.com"
-        fullName: "Patricia User"
-        role: "user"
-
-
-    # EVENT DTOs
-    EventInDto:
-      type: object
-      properties:
-        title:
-          type: string
-          minLength: 1
-          example: "Mindfulness Workshop"
-        location:
-          type: string
-          example: "Zaragoza"
-        eventDate:
-          type: string
-          format: date-time
-          example: "2026-02-01T10:00:00"
-        expectedAttendance:
-          type: integer
-          minimum: 0
-          example: 30
-        isPublic:
-          type: boolean
-          example: true
-        entryFee:
-          type: number
-          format: float
-          minimum: 0
-          example: 20.5
-        speakerId:
-          type: integer
-          format: int64
-          example: 1
-      example:
-          title: "Mindfulness Workshop"
-          location: "Zaragoza"
-          eventDate: "2026-02-01T10:00:00"
-          expectedAttendance: 40
-          isPublic: true
-          entryFee: 20.5
-          speakerId: 1
-
-
-    EventOutDto:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 1
-        title:
-          type: string
-          example: "Mindfulness Workshop"
-        location:
-          type: string
-          example: "Zaragoza"
-        eventDate:
-          type: string
-          format: date-time
-          example: "2026-02-01T10:00:00"
-        entryFee:
-          type: number
-          format: float
-          example: 20.5
-        isPublic:
-          type: boolean
-          example: true
-        speakerId:
-          type: integer
-          format: int64
-          example: 1
-      example:
-          id: 1
-          title: "Mindfulness Workshop"
-          location: "Zaragoza"
-          eventDate: "2026-02-01T10:00:00"
-          expectedAttendance: 30
-          entryFee: 20.5
-          isPublic: true
-
-    # SPEAKER DTOs
+        username: patricia
+        email: patricia@mail.com
+        fullName: Patricia User
+        role: user
     SpeakerInDto:
       type: object
       properties:
         firstName:
           type: string
-          minLength: 1
-          example: "Ana"
+          description: Nombre del ponente
         lastName:
           type: string
-          example: "Lopez"
+          description: Apellidos del ponente
         email:
           type: string
-          format: email
-          example: "ana@mail.com"
+          description: Correo electrónico del ponente
         speciality:
           type: string
-          example: "mindfulness"
+          description: Especialidad del ponente
         yearsExperience:
           type: integer
-          minimum: 0
-          example: 5
+          format: int32
+          description: Años de experiencia
         workshopHoursTotal:
           type: number
           format: float
-          example: 10
+          description: Total de horas de talleres impartidas
         available:
           type: boolean
-          example: true
+          description: Indica si el ponente está disponible
         joinDate:
           type: string
           format: date
-          example: "2025-01-01"
+          description: Fecha de incorporación
       example:
-        firstName: "Ana"
-        lastName: "Lopez"
-        email: "ana@mail.com"
-        speciality: "mindfulness"
+        firstName: Ana
+        lastName: Lopez
+        email: ana@mail.com
+        speciality: mindfulness
         yearsExperience: 5
-        workshopHoursTotal: 10
+        workshopHoursTotal: 0
         available: true
-        joinDate: "2025-01-01"
-
+        joinDate: 2025-01-01
     SpeakerOutDto:
       type: object
       properties:
         id:
           type: integer
           format: int64
-          example: 1
+          description: Identificador único del ponente
         firstName:
           type: string
-          example: "Ana"
+          description: Nombre del ponente
         lastName:
           type: string
-          example: "Lopez"
+          description: Apellidos del ponente
         email:
           type: string
-          example: "ana@mail.com"
+          description: Correo electrónico del ponente
         speciality:
           type: string
-          example: "mindfulness"
+          description: Especialidad del ponente
         yearsExperience:
           type: integer
-          example: 5
+          format: int32
+          description: Años de experiencia
       example:
         id: 1
-        firstName: "Ana"
-        lastName: "Lopez"
-        email: "ana@mail.com"
-        speciality: "mindfulness"
+        firstName: Ana
+        lastName: Lopez
+        email: ana@mail.com
+        speciality: mindfulness
         yearsExperience: 5
-
-    # WORKSHOP DTOs
+    EventInDto:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Título del evento
+        location:
+          type: string
+          description: Ubicación del evento
+        eventDate:
+          type: string
+          format: date-time
+          description: Fecha y hora del evento
+        entryFee:
+          type: number
+          format: float
+          description: Precio de entrada
+        public:
+          type: boolean
+          description: Indica si el evento es público
+        expectedAttendance:
+          type: integer
+          format: int32
+          description: Asistencia esperada
+        speakerId:
+          type: integer
+          format: int64
+          description: Identificador del ponente asociado
+      example:
+        title: Mindfulness
+        location: Zaragoza
+        eventDate: 2026-02-01T10:00:00
+        entryFee: 0
+        public: true
+        expectedAttendance: 30
+        speakerId: 1
+    EventOutDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Identificador único del evento
+        title:
+          type: string
+          description: Título del evento
+        location:
+          type: string
+          description: Ubicación del evento
+        eventDate:
+          type: string
+          format: date-time
+          description: Fecha y hora del evento
+        entryFee:
+          type: number
+          format: float
+          description: Precio de entrada
+        public:
+          type: boolean
+          description: Indica si el evento es público
+        speakerId:
+          type: integer
+          format: int64
+          description: Identificador del ponente asociado
+      example:
+        id: 1
+        title: Mindfulness
+        location: Zaragoza
+        eventDate: 2026-02-01T10:00:00
+        entryFee: 0
+        public: true
+        speakerId: 1
     WorkshopInDto:
       type: object
       properties:
         name:
           type: string
-          example: "Oratoria básica"
+          description: Nombre del taller
         description:
           type: string
-          example: "Taller de oratoria y comunicación"
+          description: Descripción del taller
         startDate:
           type: string
           format: date
-          example: "2026-02-10"
+          description: Fecha de inicio del taller
         durationMinutes:
           type: integer
-          example: 90
+          format: int32
+          description: Duración en minutos
         price:
           type: number
           format: float
-          example: 20
+          description: Precio del taller
         maxCapacity:
           type: integer
-          example: 25
-        isOnline:
+          format: int32
+          description: Capacidad máxima del taller
+        online:
           type: boolean
-          example: true
+          description: Indica si el taller es online
         speakerId:
           type: integer
           format: int64
-          example: 1
+          description: Identificador del ponente asociado
       example:
-        name: "Oratoria básica"
-        description: "Taller de oratoria y comunicación"
-        startDate: "2026-02-10"
+        name: Taller de creatividad emocional
+        description: Taller práctico para trabajar la expresión emocional.
+        startDate: 2026-06-15
         durationMinutes: 90
-        price: 20
-        maxCapacity: 25
-        isOnline: true
+        price: 25
+        maxCapacity: 12
+        online: false
         speakerId: 1
-
-
     WorkshopOutDto:
+      allOf:
+        - $ref: '#/components/schemas/WorkshopInDto'
       type: object
       properties:
         id:
           type: integer
           format: int64
-          example: 1
+          description: Identificador único del taller
+      example:
+        id: 1
+        name: Taller de creatividad emocional
+        description: Taller práctico para trabajar la expresión emocional.
+        startDate: 2026-06-15
+        durationMinutes: 90
+        price: 25
+        maxCapacity: 12
+        online: false
+        speakerId: 1
+    WorkshopOutDtoV2:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Identificador único del taller
         name:
           type: string
-          example: "Oratoria básica"
+          description: Nombre del taller
         description:
           type: string
-          example: "Taller de oratoria y comunicación"
+          description: Descripción del taller
         startDate:
           type: string
           format: date
-          example: "2026-02-10"
+          description: Fecha de inicio del taller
         durationMinutes:
           type: integer
-          example: 90
+          format: int32
+          description: Duración en minutos
         price:
           type: number
           format: float
-          example: 20
-        isOnline:
+          description: Precio del taller
+        online:
           type: boolean
-          example: true
-        speakerId:
+          description: Indica si el taller es online
+        maxCapacity:
           type: integer
-          format: int64
-          example: 1
+          format: int32
+          description: Capacidad máxima del taller
+        speakerName:
+          type: string
+          description: Nombre del ponente asociado
       example:
         id: 1
-        name: "Oratoria básica"
-        description: "Taller de oratoria y comunicación"
-        startDate: "2026-02-10"
+        name: Taller de creatividad emocional
+        description: Taller práctico para trabajar la expresión emocional.
+        startDate: 2026-06-15
         durationMinutes: 90
-        price: 20
-        isOnline: true
-        speakerId: 1
-
-    # REGISTRATION DTOs
+        price: 25
+        online: false
+        maxCapacity: 12
+        speakerName: Ana Lopez
     RegistrationInDto:
       type: object
       properties:
         numberOfTickets:
           type: integer
-          minimum: 1
-          example: 2
+          format: int32
+          description: Número de plazas que se inscriben
         userId:
           type: integer
           format: int64
-          example: 1
+          description: Identificador del usuario asociado
         workshopId:
           type: integer
           format: int64
-          example: 10
+          description: Identificador del taller asociado
       example:
         numberOfTickets: 2
         userId: 1
         workshopId: 10
-
-
     RegistrationOutDto:
+      allOf:
+        - $ref: '#/components/schemas/RegistrationInDto'
       type: object
       properties:
         id:
           type: integer
           format: int64
-          example: 1
+          description: Identificador único de la inscripción
         registrationDate:
           type: string
           format: date
-          example: "2026-01-10"
-        isPaid:
+          description: Fecha de inscripción
+        confirmationCode:
+          type: string
+          description: Código de confirmación
+        paid:
           type: boolean
-          example: false
-        numberOfTickets:
-          type: integer
-          example: 2
+          description: Indica si la inscripción está pagada
         amountPaid:
           type: number
           format: float
-          example: 0
+          description: Cantidad pagada
         rating:
           type: integer
-          example: 5
-        userId:
-          type: integer
-          format: int64
-          example: 1
-        workshopId:
-          type: integer
-          format: int64
-          example: 10
+          format: int32
+          nullable: true
+          description: Valoración de la inscripción
       example:
         id: 1
-        registrationDate: "2026-01-10"
-        isPaid: false
+        registrationDate: 2026-01-10
+        confirmationCode: CONF-1
+        paid: false
         numberOfTickets: 2
         amountPaid: 0
-        rating: 5
+        rating: null
         userId: 1
         workshopId: 10
-
-    # ERROR SCHEMAS
-    ErrorResponse:
+    BadRequest:
       type: object
       properties:
         code:
-          type: number
-          format: int
-          description: Código de estado
+          type: integer
+          format: int32
+          description: Código HTTP del error
         title:
           type: string
           description: Tipo de error
         message:
           type: string
-          description: Mensaje de error
+          description: Mensaje general del error
         errors:
           type: object
           additionalProperties:
             type: string
-
-    BadRequest:
-      allOf:
-        - $ref: '#/components/schemas/ErrorResponse'
+          description: Detalle de errores de validación
       example:
         code: 400
-        message: Validation error
         title: bad-request
-
+        message: Validation error
+        errors:
+          name: Name is mandatory
     NotFound:
-      allOf:
-        - $ref: '#/components/schemas/ErrorResponse'
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Código HTTP del error
+        title:
+          type: string
+          description: Tipo de error
+        message:
+          type: string
+          description: Mensaje del error
+        errors:
+          type: object
+          additionalProperties:
+            type: string
       example:
         code: 404
-        message: Resource not found
         title: not-found
-
+        message: The resource does not exist
+        errors: {}
+    ConflictWorkshopDuplicado:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Código HTTP del error
+        title:
+          type: string
+          description: Tipo de error
+        message:
+          type: string
+          description: Mensaje del error
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+      example:
+        code: 409
+        title: conflict
+        message: The workshop already exists
+        errors: {}
+    ConflictWorkshopInscripciones:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Código HTTP del error
+        title:
+          type: string
+          description: Tipo de error
+        message:
+          type: string
+          description: Mensaje del error
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+      example:
+        code: 409
+        title: conflict
+        message: The workshop has associated registrations
+        errors: {}
     InternalServerError:
-      allOf:
-        - $ref: '#/components/schemas/ErrorResponse'
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Código HTTP del error
+        title:
+          type: string
+          description: Tipo de error
+        message:
+          type: string
+          description: Mensaje del error
+        errors:
+          type: object
+          additionalProperties:
+            type: string
       example:
         code: 500
-        message: Internal server error
         title: internal-server-error
+        message: Internal server error
+        errors: {}
